@@ -1,11 +1,11 @@
-uint read_pixel(__global uint* img, int2 loc, int2 size){
+uint read_pixel(__global char* img, int2 loc, int2 size){
     if(all(loc >= 0) && all(loc < size)){
         return img[loc.x + loc.y*size.x];
     }
     return 0;
 }
 
-void write_pixel(__global uint* img, uint val, int2 loc, int2 size){
+void write_pixel(__global char* img, char val, int2 loc, int2 size){
     if(all(loc>=0) && all(loc < size)){
         img[loc.x + loc.y*size.x] = val;
     }
@@ -16,7 +16,7 @@ void write_pixel(__global uint* img, uint val, int2 loc, int2 size){
  * 
  * get 2d image, return flattened image have one gray channel. 
  */
-__kernel void gray(__read_only image2d_t src, __global uint* dst, int width, int height){
+__kernel void gray(__read_only image2d_t src, __global char* dst, int width, int height){
     sampler_t _sampler = CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
 
     int2 loc = (int2)(get_global_id(0),get_global_id(1));
@@ -32,7 +32,7 @@ __kernel void gray(__read_only image2d_t src, __global uint* dst, int width, int
 // normalize
 
 // dynamicThreshold
-__kernel void dynamicThreshold(__global uint* src, __global uint* dst, int width, int height, int blockSize){
+__kernel void dynamicThreshold(__global char* src, __global char* dst, int width, int height, int blockSize){
     int2 loc = (int2)(get_global_id(0),get_global_id(1));
     int2 size = (int2)(width,height);
 
