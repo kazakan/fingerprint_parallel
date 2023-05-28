@@ -167,17 +167,17 @@ class Img {
         delete[] data;
         data = nullptr;
     }
-};
 
-bool SaveImage(string fileName, char *buffer, int width, int height) {
-    FREE_IMAGE_FORMAT format =
-        FreeImage_GetFIFFromFilename(fileName.c_str());
-    FIBITMAP *image = FreeImage_ConvertFromRawBits((BYTE *)buffer,
-                                                   width,
-                                                   height, width * 4, 32,
-                                                   0xFF000000, 0x00FF0000, 0x0000FF00);
-    return FreeImage_Save(format, image, fileName.c_str());
-}
+    static bool saveImage(string fileName, char *buffer, int width, int height) {
+        FREE_IMAGE_FORMAT format =
+            FreeImage_GetFIFFromFilename(fileName.c_str());
+        FIBITMAP *image = FreeImage_ConvertFromRawBits((BYTE *)buffer,
+                                                       width,
+                                                       height, width * 4, 32,
+                                                       0xFF000000, 0x00FF0000, 0x0000FF00);
+        return FreeImage_Save(format, image, fileName.c_str());
+    }
+};
 
 string readFile(string path) {
     ifstream ifs(path);
@@ -301,7 +301,7 @@ int main(int argc, char **argv) {
 
     // write image
 
-    SaveImage(pathPrefix + "result.png", outBuffer, img.width, img.height);
+    Img::saveImage(pathPrefix + "result.png", outBuffer, img.width, img.height);
     FreeImage_DeInitialise();
 
     // delete [] outImgData;
