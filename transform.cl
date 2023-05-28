@@ -78,9 +78,51 @@ __kernel void gaussian(__global char *src, __global char *dst, int width, int he
     write_pixel(dst, val, loc, size);
 }
 
-// sovelX
+// sobelX
+__kernel void sobelX(__global char *src, __global char *dst, int width, int height) {
+    int2 loc = (int2)(get_global_id(0), get_global_id(1));
+    int2 size = (int2)(width, height);
 
-// sovelY
+    // 1 0 -1
+    // 2 0 -2
+    // 1 0 -1
+
+    int val = read_pixel(src, loc + (int2)(-1, -1), size) * 1 +
+               read_pixel(src, loc + (int2)(-1, 0), size) * 2 +
+               read_pixel(src, loc + (int2)(-1, +1), size) * 1 +
+               read_pixel(src, loc + (int2)(+1, -1), size) * -1 +
+               read_pixel(src, loc + (int2)(+1, 0), size) * -2 +
+               read_pixel(src, loc + (int2)(+1, +1), size) * -1;
+    
+    // set value in range 0~255
+    val = val > 255 ? 255 : val;
+    val = val < 0 ? 0 : val;
+
+    write_pixel(dst, val, loc, size);
+}
+
+// sobelY
+__kernel void sobelY(__global char *src, __global char *dst, int width, int height) {
+    int2 loc = (int2)(get_global_id(0), get_global_id(1));
+    int2 size = (int2)(width, height);
+
+    //  1  2  1
+    //  0  0  0
+    // -1 -2 -1
+
+    uint val = read_pixel(src, loc + (int2)(-1, -1), size) * 1 +
+               read_pixel(src, loc + (int2)(-1, +1), size) * -1 +
+               read_pixel(src, loc + (int2)(0, -1), size) * 2 +
+               read_pixel(src, loc + (int2)(0, +1), size) * -2 +
+               read_pixel(src, loc + (int2)(+1, -1), size) * 1 +
+               read_pixel(src, loc + (int2)(+1, +1), size) * 1;
+    
+    // set value in range 0~255
+    val = val > 255 ? 255 : val;
+    val = val < 0 ? 0 : val;
+
+    write_pixel(dst, val, loc, size);
+}
 
 // rosenfieldThinning4
 
