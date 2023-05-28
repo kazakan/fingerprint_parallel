@@ -7,8 +7,6 @@ using namespace std;
 
 #define MAX_SOURCE_SIZE (0x100000)
 
-
-
 class Img {
   public:
     unsigned int width;

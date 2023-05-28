@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include "CL/opencl.hpp"
+#include <vector>
 
 class OclInfo {
   public:

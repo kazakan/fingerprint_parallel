@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CL/opencl.hpp"
 #include "OclInfo.hpp"
 #include <memory>
@@ -40,5 +42,5 @@ class MatrixBuffer {
         return _data;
     }
 
-    cl::Buffer* getClBuffer() { return _buffer; }
+    cl::Buffer *getClBuffer() { return _buffer; }
 };
