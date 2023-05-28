@@ -179,36 +179,23 @@ class Img {
     }
 };
 
+class SingleChannelImgBuffer {
+  private:
+    shared_ptr<char[]> data = nullptr;
+    unsigned int _width;
+    unsigned int _height;
+    unsigned int _len;
+
+  public:
+    SingleChannelImgBuffer(int width, int height)
+        : _width(width), _height(height), _len(width * height) {
+        data = shared_ptr<char[]>(new char[_len]);
+    };
+};
+
 string readFile(string path) {
     ifstream ifs(path);
     return string((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
-}
-
-struct OclInfo {
-    vector<cl::Platform> platforms;
-    cl::Context ctx;
-    vector<cl::Device> devices;
-    cl::CommandQueue queue;
-};
-
-OclInfo initOpencl() {
-    vector<cl::Platform> platformList;
-    cl::Platform::get(&platformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM,
-        (cl_context_properties)(platformList[0])(),
-        0};
-
-    cl::Context ctx(CL_DEVICE_TYPE_GPU, cprops);
-
-    vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
-    cl::CommandQueue queue(ctx, devices[0], 0);
-
-    OclInfo oclinfo = {
-        platformList, ctx, devices, queue};
-
-    return oclinfo;
 }
 
 int checkErr(int err, int id = 0) {
@@ -238,7 +225,7 @@ int main(int argc, char **argv) {
 
     // init opencl
 
-    OclInfo oclinfo = initOpencl();
+    OclInfo oclinfo = OclInfo::initOpenCL();
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
