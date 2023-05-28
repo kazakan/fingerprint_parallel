@@ -71,7 +71,7 @@ __kernel void gaussian(__global char *src, __global char *dst, int width, int he
                read_pixel(src, loc + (int2)(+1, -1), size) * 1 +
                read_pixel(src, loc + (int2)(+1, 0), size) * 2 +
                read_pixel(src, loc + (int2)(+1, +1), size) * 1;
-    
+
     // rount(a/b) = (a + (b/2)) / b
     val = (val + 8) / 16;
 
@@ -88,12 +88,12 @@ __kernel void sobelX(__global char *src, __global char *dst, int width, int heig
     // 1 0 -1
 
     int val = read_pixel(src, loc + (int2)(-1, -1), size) * 1 +
-               read_pixel(src, loc + (int2)(-1, 0), size) * 2 +
-               read_pixel(src, loc + (int2)(-1, +1), size) * 1 +
-               read_pixel(src, loc + (int2)(+1, -1), size) * -1 +
-               read_pixel(src, loc + (int2)(+1, 0), size) * -2 +
-               read_pixel(src, loc + (int2)(+1, +1), size) * -1;
-    
+              read_pixel(src, loc + (int2)(-1, 0), size) * 2 +
+              read_pixel(src, loc + (int2)(-1, +1), size) * 1 +
+              read_pixel(src, loc + (int2)(+1, -1), size) * -1 +
+              read_pixel(src, loc + (int2)(+1, 0), size) * -2 +
+              read_pixel(src, loc + (int2)(+1, +1), size) * -1;
+
     // set value in range 0~255
     val = val > 255 ? 255 : val;
     val = val < 0 ? 0 : val;
@@ -116,14 +116,10 @@ __kernel void sobelY(__global char *src, __global char *dst, int width, int heig
                read_pixel(src, loc + (int2)(0, +1), size) * -2 +
                read_pixel(src, loc + (int2)(+1, -1), size) * 1 +
                read_pixel(src, loc + (int2)(+1, +1), size) * 1;
-    
+
     // set value in range 0~255
     val = val > 255 ? 255 : val;
     val = val < 0 ? 0 : val;
 
     write_pixel(dst, val, loc, size);
 }
-
-// rosenfieldThinning4
-
-//
