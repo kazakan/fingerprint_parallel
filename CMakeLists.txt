@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.1)
 
 project ("FingerprintParallel" LANGUAGES CXX)
 
-add_executable (run "main.cpp" "main.hpp" "OclInfo.cpp" "OclInfo.hpp")
+add_executable (run "main.cpp" "main.hpp" "OclInfo.hpp")
 
 # Library Path Setting
 string(REPLACE ":" ";" LIBRARY_DIRS $ENV{LD_LIBRARY_PATH})

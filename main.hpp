@@ -10,3 +10,5 @@
 extern "C"{
     #include "FreeImage.h"
 }
+
+#include "OclInfo.hpp"
