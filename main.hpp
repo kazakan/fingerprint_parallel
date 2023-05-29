@@ -13,3 +13,4 @@ extern "C" {
 
 #include "OclInfo.hpp"
 #include "MatrixBuffer.hpp"
+#include "Img.hpp"
