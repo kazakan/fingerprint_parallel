@@ -150,7 +150,7 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, 
     int2 size = (int2)(width, height);
 
     // neighbors (N,NE,E,SE,S,SW,W,NW)
-    char8 neighbors = (char8)(read_pixel(src, loc + (int2)(0, -1), size),
+    uchar8 neighbors = (uchar8)(read_pixel(src, loc + (int2)(0, -1), size),
                               read_pixel(src, loc + (int2)(1, -1), size),
                               read_pixel(src, loc + (int2)(1, 0), size),
                               read_pixel(src, loc + (int2)(1, 1), size),
@@ -159,6 +159,14 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, 
                               read_pixel(src, loc + (int2)(-1, 0), size),
                               read_pixel(src, loc + (int2)(-1, -1), size));
 
-    // write_pixel(dst, val, loc, size);
-    // TODO : Implement
+    uchar8 rotated = neighbors.s12345670;
+    char8 crossed = neighbors && rotated;
+
+    // sum reduction
+    char4 s1 = crossed.s0123 + crossed.s4567;
+    char2 s2 = s1.xy + s1.zw;
+    
+    int crossNum = (s2.x + s2.y) / 2;
+
+    write_pixel(dst, crossNum, loc, size);
 }
