@@ -145,7 +145,7 @@ __kernel void rosenfieldThinFourCon(__global uchar *src, __global uchar *dst, in
 }
 
 // crossNumbers
-__kernel void crossHumbers(__global uchar *src, __global uchar *dst, int width, int height) {
+__kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, int height) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
