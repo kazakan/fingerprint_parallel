@@ -4,6 +4,10 @@
 #include "OclInfo.hpp"
 #include <memory>
 
+/**
+ * @brief Class represents Matrix. May contains related Opencl Buffer object.
+ *
+ */
 class MatrixBuffer {
   private:
     char *_data = nullptr;
@@ -13,6 +17,11 @@ class MatrixBuffer {
     cl::Buffer *_buffer = nullptr;
 
   public:
+    /**
+     * @brief Create MatruxBuffer with width, and height.
+     * @param width width of image. Number of pixels in row.
+     * @param height height of image. Number of pixels in column.
+     */
     MatrixBuffer(int width, int height)
         : _width(width), _height(height), _len(width * height) {
 
@@ -25,6 +34,11 @@ class MatrixBuffer {
             delete _buffer;
     }
 
+    /**
+     * @brief Initialize OpenCL Buffer for matrix.
+     * @param ctx cl::Context object
+     * @param memFlag flag used for OpenCL memory access policy. Default = CL_MEM_READ_WRITE
+     */
     void createBuffer(cl::Context ctx, cl_mem_flags memFlag = CL_MEM_READ_WRITE) {
         cl_int err = CL_SUCCESS;
         _buffer = new cl::Buffer(ctx, memFlag, _len * sizeof(cl_int), nullptr, &err);
