@@ -10,7 +10,7 @@
  */
 class MatrixBuffer {
   private:
-    char *_data = nullptr;
+    unsigned char *_data = nullptr;
     unsigned int _width;
     unsigned int _height;
     unsigned int _len;
@@ -25,7 +25,7 @@ class MatrixBuffer {
     MatrixBuffer(int width, int height)
         : _width(width), _height(height), _len(width * height) {
 
-        _data = new char[_len];
+        _data = new unsigned char[_len];
     };
 
     ~MatrixBuffer() {
@@ -52,7 +52,7 @@ class MatrixBuffer {
     unsigned int getHeight() { return _height; }
     unsigned int getLen() { return _len; }
 
-    char *getData() {
+    unsigned char *getData() {
         return _data;
     }
 

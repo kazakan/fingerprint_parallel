@@ -12,7 +12,7 @@ class Img {
     unsigned int width;
     unsigned int height;
     unsigned int size;
-    char *data;
+    unsigned char *data;
     string path;
 
     Img(string path) : path(path) {
@@ -29,10 +29,26 @@ class Img {
         this->height = FreeImage_GetHeight(image);
         this->size = width * height * 4;
 
-        data = new char[size];
+        data = new unsigned char[size];
         memcpy(data, FreeImage_GetBits(image), size);
 
         FreeImage_Unload(image);
+    }
+
+    Img(MatrixBuffer& matrixBuffer){
+        width = matrixBuffer.getWidth();
+        height = matrixBuffer.getHeight();
+        size = matrixBuffer.getLen()*4;
+
+        unsigned char* matDat = matrixBuffer.getData();
+
+        data = new unsigned char[size];
+        for(int i=0;i< size/4 ;++i){
+            data[i*4] = matDat[i];
+            data[i*4+1] = matDat[i];
+            data[i*4+2] = matDat[i];
+            data[i*4+3] = 255;
+        }
     }
 
     ~Img() {
@@ -40,7 +56,11 @@ class Img {
         data = nullptr;
     }
 
-    static bool saveImage(string fileName, char *buffer, int width, int height) {
+    bool saveImage(string filename){
+        return Img::saveImage(filename,data,width,height);
+    }
+
+    static bool saveImage(string fileName, unsigned char *buffer, int width, int height) {
         FREE_IMAGE_FORMAT format =
             FreeImage_GetFIFFromFilename(fileName.c_str());
         FIBITMAP *image = FreeImage_ConvertFromRawBits((BYTE *)buffer,
@@ -51,10 +71,12 @@ class Img {
     }
 };
 
+
 string readFile(string path) {
     ifstream ifs(path);
     return string((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
 }
+
 
 int checkErr(int err, int id = 0) {
     if (err != CL_SUCCESS)
@@ -62,6 +84,8 @@ int checkErr(int err, int id = 0) {
     return err;
 }
 // driver code
+
+
 
 int main(int argc, char **argv) {
     string pathPrefix = "../";
@@ -87,7 +111,11 @@ int main(int argc, char **argv) {
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
-    cl::ImageFormat outImgFormat(CL_RGBA, CL_UNSIGNED_INT8);
+    MatrixBuffer buffer1(img.width,img.height);
+    MatrixBuffer buffer2(img.width,img.height);
+
+    buffer1.createBuffer(oclinfo.ctx);
+    buffer2.createBuffer(oclinfo.ctx);
 
     cl::Image2D climg(
         oclinfo.ctx,
@@ -101,15 +129,6 @@ int main(int argc, char **argv) {
     err = oclinfo.queue.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
     checkErr(err, 1);
 
-    char *outImgData = new char[img.size];
-
-    cl::Image2D outImg(
-        oclinfo.ctx,
-        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-        outImgFormat,
-        img.width, img.height, 0, outImgData, &err);
-    checkErr(err, 2);
-
     // create kernel from source code
     cl::Program::Sources sources;
     sources.push_back(sourceStr);
@@ -118,35 +137,52 @@ int main(int argc, char **argv) {
     checkErr(err, 3);
 
     cl::Kernel kernel(program, "gray");
-    cl::Kernel dynamicThresholdKernel(program, "dynamicThresholding");
+    cl::Kernel dynamicThresholdKernel(program, "dynamicThreshold");
 
     // set kernel arg
-
     kernel.setArg(0, climg);
-    kernel.setArg(1, outImg);
+    kernel.setArg(1, *buffer1.getClBuffer());
+    kernel.setArg(2, img.width);
+    kernel.setArg(3, img.height);
 
     // dynamic thresholding
-    dynamicThresholdKernel.setArg(0, outImg);
-    dynamicThresholdKernel.setArg(1, climg);
-    dynamicThresholdKernel.setArg(2, 9);
+    dynamicThresholdKernel.setArg(0, *buffer1.getClBuffer());
+    dynamicThresholdKernel.setArg(1, *buffer2.getClBuffer());
+    dynamicThresholdKernel.setArg(2, img.width);
+    dynamicThresholdKernel.setArg(3, img.height);
+    dynamicThresholdKernel.setArg(4, 9);
 
-    const size_t wsize = 16;
+    const size_t wsize = 8;
     cl::NDRange local_work_size(wsize, wsize);
     cl::NDRange global_work_size(img.width, img.height);
 
     // launch kernel
     err = oclinfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
     checkErr(err, 4);
-    err = oclinfo.queue.enqueueNDRangeKernel(dynamicThresholdKernel, cl::NullRange, global_work_size, local_work_size);
-    checkErr(err, 5);
 
     // ger return value
-    char *outBuffer = (char *)oclinfo.queue.enqueueMapImage(climg, CL_TRUE, CL_MAP_READ, {0, 0, 0}, {img.width, img.height, 1}, 0, NULL, NULL, NULL, &err);
+    err = oclinfo.queue.enqueueReadBuffer(*buffer1.getClBuffer(), CL_TRUE,0,buffer1.getLen(),buffer1.getData(),nullptr,nullptr);
+    checkErr(err, 5);
+    Img resultImg1(buffer1);
+    bool saved = resultImg1.saveImage(pathPrefix+"result1.png");
+    if(!saved){
+        cerr<<"Failed save image"<<endl;
+    }
+
+    // run kernel 
+    err = oclinfo.queue.enqueueNDRangeKernel(dynamicThresholdKernel, cl::NullRange, global_work_size, local_work_size);
     checkErr(err, 6);
 
-    // write image
+    // ger return value
+    err = oclinfo.queue.enqueueReadBuffer(*buffer2.getClBuffer(), CL_TRUE,0,buffer2.getLen(),buffer2.getData(),nullptr,nullptr);
+    checkErr(err, 7);
 
-    Img::saveImage(pathPrefix + "result.png", outBuffer, img.width, img.height);
+    // write image
+    Img resultImg2(buffer2);
+    saved = resultImg2.saveImage(pathPrefix+"result2.png");
+    if(!saved){
+        cerr<<"Failed save image"<<endl;
+    }
     FreeImage_DeInitialise();
 
     // delete [] outImgData;

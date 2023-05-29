@@ -12,3 +12,4 @@ extern "C" {
 }
 
 #include "OclInfo.hpp"
+#include "MatrixBuffer.hpp"
