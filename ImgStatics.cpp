@@ -1,25 +1,94 @@
 #include "ImgStatics.hpp"
 
-void ImgStatics::sum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
-    cl::Kernel kernel(program, "gray");
+ImgStatics::ImgStatics(OclInfo oclInfo, string source) {
+    this->oclInfo = oclInfo;
+    cl::Program::Sources sources;
+    sources.push_back(source);
+    this->program = cl::Program(oclInfo.ctx, sources);
 
-    kernel.setArg(0, src);
-    kernel.setArg(1, dst.getClBuffer());
-    kernel.setArg(2, dst.getWidth());
-    kernel.setArg(3, dst.getHeight());
+    cl_int err = this->program.build(oclInfo.devices);
+    if (err)
+        throw OclBuildException(err);
+}
 
-    const size_t wsize = 8;
-    cl::NDRange local_work_size(wsize, wsize);
-    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+float ImgStatics::sum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
+    cl::Kernel kernel(program, "sum");
 
-    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
+    int N = src.getLen();
+    int group_size = 64;
+    int n_groups = (N + (group_size - 1)) / group_size;
+    int global_work_size = group_size * n_groups;
+
+    kernel.setArg(0, *src.getClBuffer());
+    kernel.setArg(1, *dst.getClBuffer());
+    kernel.setArg(2, group_size * sizeof(float), NULL);
+    kernel.setArg(3, N);
+
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, 0, global_work_size, group_size);
 
     if (err)
         throw OclKernelEnqueueError(err);
+
+    dst.toHost(oclInfo);
+
+    float result = 0;
+    float *data = dst.getData();
+    for (int i = 0; i < n_groups; ++i) {
+        result += data[i];
+    }
+
+    // copy sum of all workgroups in first of dst buffer element.
+    data[0] = result;
+    dst.toGpu(oclInfo);
+    return result;
 }
 
-void ImgStatics::mean(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
+float ImgStatics::mean(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
+    const int N = src.getLen();
+    float result = sum(src,dst) / N;
+    dst.getData()[0] = result;
+    dst.toGpu(oclInfo);
+    return result;
 }
 
-void ImgStatics::var(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
+float ImgStatics::var(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
+    const int N = src.getLen();
+    float elementSum = sum(src,dst);
+    float elementSquareSum = squareSum(src,dst);
+    float result = (elementSquareSum + elementSum) / N;
+    dst.getData()[0] = result;
+    dst.toGpu(oclInfo);
+    return result;
+}
+
+float ImgStatics::squareSum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
+    cl::Kernel kernel(program, "squareSum");
+
+    int N = src.getLen();
+    int group_size = 64;
+    int n_groups = (N + (group_size - 1)) / group_size;
+    int global_work_size = group_size * n_groups;
+
+    kernel.setArg(0, *src.getClBuffer());
+    kernel.setArg(1, *dst.getClBuffer());
+    kernel.setArg(2, group_size * sizeof(float), NULL);
+    kernel.setArg(3, N);
+
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, 0, global_work_size, group_size);
+
+    if (err)
+        throw OclKernelEnqueueError(err);
+
+    dst.toHost(oclInfo);
+
+    float result = 0;
+    float *data = dst.getData();
+    for (int i = 0; i < n_groups; ++i) {
+        result += data[i];
+    }
+
+    // copy sum of all workgroups in first of dst buffer element.
+    data[0] = result;
+    dst.toGpu(oclInfo);
+    return result;
 }

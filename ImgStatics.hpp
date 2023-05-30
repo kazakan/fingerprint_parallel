@@ -10,7 +10,8 @@ class ImgStatics {
 
   public:
     ImgStatics(OclInfo oclInfo, string source);
-    void sum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
-    void mean(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
-    void var(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
+    float sum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
+    float mean(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
+    float var(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
+    float squareSum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst);
 };
