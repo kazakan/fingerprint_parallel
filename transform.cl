@@ -51,6 +51,19 @@ __kernel void normalize(__global uchar *src, __global uchar *dst, float M, float
     write_pixel(dst, pixelByte, loc, size);
 }
 
+// negate
+__kernel void negate(__global uchar *src, __global uchar *dst, int width, int height) {
+
+    int2 loc = (int2)(get_global_id(0), get_global_id(1));
+    int2 size = (int2)(width, height);
+    uchar pixel = read_pixel(src, loc, size);
+
+    pixel = 255 - pixel;
+
+    write_pixel(dst, pixel, loc, size);
+}
+
+
 // dynamicThreshold
 __kernel void dynamicThreshold(__global uchar *src, __global uchar *dst, int width, int height, int blockSize) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));

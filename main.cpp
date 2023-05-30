@@ -67,48 +67,54 @@ int main(int argc, char **argv) {
     Img resultGray(buffer1);
     resultGray.saveImage(pathPrefix + "resultGray.png");
 
+    //negate
+    imgTransformer.negate(buffer1,buffer2);
+    buffer2.toHost(oclInfo);
+    Img resultNegate(buffer2);
+    resultNegate.saveImage(pathPrefix + "resultNegate.png");
+
     // normalize
-    float mean = imgStatics.mean(buffer1);
-    float var = imgStatics.var(buffer1);
+    float mean = imgStatics.mean(buffer2);
+    float var = imgStatics.var(buffer2);
 
     cout<<"Mean : "<<mean<<" var : "<<var<<endl;
 
-    imgTransformer.normalize(buffer1,buffer2,128,2000,mean,var);
-    buffer2.toHost(oclInfo);
-    Img resultNormalize(buffer2);
+    imgTransformer.normalize(buffer2,buffer1,128,2000,mean,var);
+    buffer1.toHost(oclInfo);
+    Img resultNormalize(buffer1);
     resultNormalize.saveImage(pathPrefix + "resultNormalize.png");
 
     // gaussian filter
-    imgTransformer.applyGaussianFilter(buffer2,buffer1);
+    imgTransformer.applyGaussianFilter(buffer1,buffer2);
 
-    buffer1.toHost(oclInfo);
-    Img resultGaussian(buffer1);
+    buffer2.toHost(oclInfo);
+    Img resultGaussian(buffer2);
     resultGaussian.saveImage(pathPrefix + "resultGaussian.png");
 
     // dynamic thresholding
-    imgTransformer.applyDynamicThresholding(buffer1,buffer2,3);
+    imgTransformer.applyDynamicThresholding(buffer2,buffer1,5);
 
-    buffer2.toHost(oclInfo);
-    Img resultThreshold(buffer2);
+    buffer1.toHost(oclInfo);
+    Img resultThreshold(buffer1);
     resultThreshold.saveImage(pathPrefix + "resultThreshold.png");
 
     // thinning
-    imgTransformer.applyThinning8(buffer2,buffer1);
+    imgTransformer.applyThinning8(buffer1,buffer2);
 
-    buffer1.toHost(oclInfo);
-    Img resultThinning(buffer1);
+    buffer2.toHost(oclInfo);
+    Img resultThinning(buffer2);
     resultThinning.saveImage(pathPrefix + "resultThinning.png");
 
     // cross number
-    detector.applyCrossNumber(buffer1,buffer2);
-    buffer2.toHost(oclInfo);
-    Img resultCrossNum(buffer2);
+    detector.applyCrossNumber(buffer2,buffer1);
+    buffer1.toHost(oclInfo);
+    Img resultCrossNum(buffer1);
     resultCrossNum.saveImage(pathPrefix + "resultCrossNum.png");
 
     
-    cout<<buffer2.getLen()<<endl;
-    for(int i=0;i<buffer2.getLen();++i){
-        BYTE val = buffer2.getData()[i];
+    cout<<buffer1.getLen()<<endl;
+    for(int i=0;i<buffer1.getLen();++i){
+        BYTE val = buffer1.getData()[i];
         if(val != 0){
             cout<<"Found type "<< (int )val << " at "<<i<<"\n";
         }
