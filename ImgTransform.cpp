@@ -10,17 +10,42 @@ ImgTransform::ImgTransform(OclInfo oclInfo, string source) {
     if(err) throw OclBuildException(err);
 }
 
-void ImgTransform::toGrayScale(Img &src, MatrixBuffer &dst) {
+void ImgTransform::toGrayScale(cl::Image2D &src, MatrixBuffer<BYTE> &dst) {
     cl::Kernel kernel(program,"gray");
+
+    kernel.setArg(0, src); 
+    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(2, dst.getWidth()); 
+    kernel.setArg(3, dst.getHeight());
+
+    const size_t wsize = 8;
+    cl::NDRange local_work_size(wsize, wsize);
+    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
+    
+    if(err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::normalize(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+     cl::Kernel kernel(program,"normalize");
+
+    kernel.setArg(0, src); 
+    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(2, dst.getWidth()); 
+    kernel.setArg(3, dst.getHeight());
+
+    const size_t wsize = 8;
+    cl::NDRange local_work_size(wsize, wsize);
+    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
+    
+    if(err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::applyGaborFilter(MatrixBuffer &src, MatrixBuffer &dst) {
-}
 
-void ImgTransform::applyDynamicThresholding(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
     cl::Kernel kernel(program,"dynamicThreshold");
 
     kernel.setArg(0, src.getClBuffer());
@@ -35,11 +60,39 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer &src, MatrixBuffer &dst
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
     
-    if(err) throw OclBuildException(err);
+    if(err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::applyThinning(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+        cl::Kernel kernel(program,"normalize");
+
+    kernel.setArg(0, src); 
+    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(2, dst.getWidth()); 
+    kernel.setArg(3, dst.getHeight());
+
+    const size_t wsize = 8;
+    cl::NDRange local_work_size(wsize, wsize);
+    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
+    
+    if(err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::applyGaussianFilter(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgTransform::applyGaussianFilter(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+        cl::Kernel kernel(program,"gaussian");
+
+    kernel.setArg(0, src); 
+    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(2, dst.getWidth()); 
+    kernel.setArg(3, dst.getHeight());
+
+    const size_t wsize = 8;
+    cl::NDRange local_work_size(wsize, wsize);
+    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
+    
+    if(err) throw OclKernelEnqueueError(err);
 }

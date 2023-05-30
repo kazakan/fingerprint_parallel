@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
-    MatrixBuffer buffer1(img.width,img.height);
-    MatrixBuffer buffer2(img.width,img.height);
+    MatrixBuffer<BYTE> buffer1(img.width,img.height);
+    MatrixBuffer<BYTE> buffer2(img.width,img.height);
 
     buffer1.createBuffer(oclinfo.ctx);
     buffer2.createBuffer(oclinfo.ctx);

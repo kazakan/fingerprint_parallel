@@ -38,7 +38,7 @@ class Img {
         FreeImage_Unload(image);
     }
 
-    Img(MatrixBuffer& matrixBuffer){
+    Img(MatrixBuffer<BYTE>& matrixBuffer){
         width = matrixBuffer.getWidth();
         height = matrixBuffer.getHeight();
         size = matrixBuffer.getLen()*4;

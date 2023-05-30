@@ -9,9 +9,10 @@
  * @brief Class represents Matrix. May contains related Opencl Buffer object.
  *
  */
+template<typename T>
 class MatrixBuffer {
   private:
-    unsigned char *_data = nullptr;
+    T *_data = nullptr;
     unsigned int _width;
     unsigned int _height;
     unsigned int _len;
@@ -26,7 +27,7 @@ class MatrixBuffer {
     MatrixBuffer(int width, int height)
         : _width(width), _height(height), _len(width * height) {
 
-        _data = new unsigned char[_len];
+        _data = new T[_len];
     };
 
     ~MatrixBuffer() {
@@ -42,7 +43,7 @@ class MatrixBuffer {
      */
     void createBuffer(cl::Context ctx, cl_mem_flags memFlag = CL_MEM_READ_WRITE) {
         cl_int err = CL_SUCCESS;
-        _buffer = new cl::Buffer(ctx, memFlag, _len * sizeof(cl_int), nullptr, &err);
+        _buffer = new cl::Buffer(ctx, memFlag, _len * sizeof(T), nullptr, &err);
 
         if (err != CL_SUCCESS) {
             throw OclException("Error while creating OCL buffer in MatrixBuffer.",err);
@@ -53,7 +54,7 @@ class MatrixBuffer {
     unsigned int getHeight() { return _height; }
     unsigned int getLen() { return _len; }
 
-    unsigned char *getData() {
+    T *getData() {
         return _data;
     }
 
