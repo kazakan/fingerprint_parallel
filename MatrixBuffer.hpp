@@ -2,6 +2,7 @@
 
 #include "CL/opencl.hpp"
 #include "OclInfo.hpp"
+#include "OclException.hpp"
 #include <memory>
 
 /**
@@ -44,7 +45,7 @@ class MatrixBuffer {
         _buffer = new cl::Buffer(ctx, memFlag, _len * sizeof(cl_int), nullptr, &err);
 
         if (err != CL_SUCCESS) {
-            throw "Error while creating OCL buffer in MatrixBuffer. Error : " + clErrorToStr(err);
+            throw OclException("Error while creating OCL buffer in MatrixBuffer.",err);
         }
     }
 
