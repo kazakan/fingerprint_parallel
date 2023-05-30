@@ -49,18 +49,21 @@ void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,fl
 }
 
 
-void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,int blockSize) {
     cl::Kernel kernel(program,"dynamicThreshold");
+
+    const size_t wsize = 8;
+    cl::NDRange local_work_size(wsize, wsize);
+    cl::NDRange global_work_size(src.getWidth(), src.getHeight());
 
     kernel.setArg(0, *src.getClBuffer());
     kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, src.getWidth());
     kernel.setArg(3, src.getHeight());
-    kernel.setArg(4, 9);
+    kernel.setArg(4,sizeof(BYTE)*wsize*wsize,nullptr); // localContinueFlags
+    kernel.setArg(5, 9);
 
-    const size_t wsize = 8;
-    cl::NDRange local_work_size(wsize, wsize);
-    cl::NDRange global_work_size(src.getWidth(), src.getHeight());
+    
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
     

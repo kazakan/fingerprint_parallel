@@ -14,7 +14,7 @@ class ImgTransform{
 
     void toGrayScale(cl::Image2D& src, MatrixBuffer<BYTE>& dst);
     void normalize(MatrixBuffer<BYTE>& src, MatrixBuffer<BYTE>& dst,float M0, float V0, float M,float V);
-    void applyDynamicThresholding(MatrixBuffer<BYTE>& src, MatrixBuffer<BYTE>& dst);
+    void applyDynamicThresholding(MatrixBuffer<BYTE>& src, MatrixBuffer<BYTE>& dst,int blockSize);
     void applyThinning(MatrixBuffer<BYTE>& src, MatrixBuffer<BYTE>& dst);
     
     void applyGaussianFilter(MatrixBuffer<BYTE>& src, MatrixBuffer<BYTE>& dst);
