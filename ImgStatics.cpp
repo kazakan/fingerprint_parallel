@@ -53,9 +53,9 @@ float ImgStatics::mean(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
 
 float ImgStatics::var(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
     const int N = src.getLen();
-    float elementSum = sum(src,dst);
+    float mean = sum(src,dst) / N;
     float elementSquareSum = squareSum(src,dst);
-    float result = (elementSquareSum + elementSum) / N;
+    float result = elementSquareSum / N - mean*mean;
     dst.getData()[0] = result;
     dst.toGpu(oclInfo);
     return result;
