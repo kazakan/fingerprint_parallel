@@ -7,7 +7,7 @@ add_executable (run "main.cpp" "main.hpp" "OclInfo.hpp"
                 "MatrixBuffer.hpp"  "MatrixBuffer.cpp" 
                 "Img.hpp" "ImgTransform.hpp" "ImgTransform.cpp"
                  "ImgStatics.hpp" "ImgStatics.cpp"
-                "MinutiaeDetector.hpp" 
+                "MinutiaeDetector.hpp" "MinutiaeDetector.cpp" 
                 "OclException.hpp" "OclException.cpp")
 
 # Library Path Setting
