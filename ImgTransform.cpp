@@ -39,7 +39,7 @@ void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst, f
     kernel.setArg(4, M0);
     kernel.setArg(5, V0);
     kernel.setArg(6, dst.getWidth());
-    kernel.setArg(6, dst.getHeight());
+    kernel.setArg(7, dst.getHeight());
 
     const size_t wsize = 8;
     cl::NDRange local_work_size(wsize, wsize);
@@ -62,8 +62,7 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffe
     kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, src.getWidth());
     kernel.setArg(3, src.getHeight());
-    kernel.setArg(4, sizeof(BYTE) * wsize * wsize, nullptr); // localContinueFlags
-    kernel.setArg(5, 9);
+    kernel.setArg(4, blockSize);
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
 
@@ -72,16 +71,20 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffe
 }
 
 void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
-    cl::Kernel kernel(program, "normalize");
+    cl::Kernel kernel(program, "rosenfieldThinFourCon");
+    const size_t wsize = 8;
+    cl::NDRange local_work_size(wsize, wsize);
+    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+
+    MatrixBuffer<BYTE> globalFlag(8, 8);
+    globalFlag.createBuffer(oclInfo.ctx);
 
     kernel.setArg(0, *src.getClBuffer());
     kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, dst.getWidth());
     kernel.setArg(3, dst.getHeight());
-
-    const size_t wsize = 8;
-    cl::NDRange local_work_size(wsize, wsize);
-    cl::NDRange global_work_size(dst.getWidth(), dst.getHeight());
+    kernel.setArg(4, *globalFlag.getClBuffer());             // localContinueFlags
+    kernel.setArg(5, sizeof(BYTE) * wsize * wsize, nullptr); // localContinueFlags
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
 
