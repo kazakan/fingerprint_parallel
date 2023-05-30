@@ -86,14 +86,14 @@ int main(int argc, char **argv) {
     resultGaussian.saveImage(pathPrefix + "resultGaussian.png");
 
     // dynamic thresholding
-    imgTransformer.applyDynamicThresholding(buffer1,buffer2,9);
+    imgTransformer.applyDynamicThresholding(buffer1,buffer2,3);
 
     buffer2.toHost(oclInfo);
     Img resultThreshold(buffer2);
     resultThreshold.saveImage(pathPrefix + "resultThreshold.png");
 
     // thinning
-    imgTransformer.applyThinning(buffer2,buffer1);
+    imgTransformer.applyThinning8(buffer2,buffer1);
 
     buffer1.toHost(oclInfo);
     Img resultThinning(buffer1);
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     for(int i=0;i<buffer2.getLen();++i){
         BYTE val = buffer2.getData()[i];
         if(val != 0){
-            cout<<"Found type "<< (int )val << " at "<<i<<"\n";
+            //cout<<"Found type "<< (int )val << " at "<<i<<"\n";
         }
     }
 
