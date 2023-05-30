@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     for(int i=0;i<buffer2.getLen();++i){
         BYTE val = buffer2.getData()[i];
         if(val != 0){
-            //cout<<"Found type "<< (int )val << " at "<<i<<"\n";
+            cout<<"Found type "<< (int )val << " at "<<i<<"\n";
         }
     }
 
