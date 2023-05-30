@@ -135,52 +135,64 @@ __kernel void rosenfieldThinFourCon(
 
     const int2 loc = (int2)(get_global_id(0), get_global_id(1));
     const int2 size = (int2)(width, height);
-    const int2 localLoc = (int2)(get_local_id(0),get_local_id(1));
-    const int2 groupSize = (int2)(get_local_size(0),get_local_size(1));
-    const int2 groupId = (int2)(get_group_id(0),get_group_id(1));
-    const int2 numGroups = (int2)(get_num_groups(0),get_num_groups(1));
-    const int N = groupSize.x*groupSize.y;
-    const int localIdx = localLoc.x + localLoc.y*groupSize.x;
+    const int2 localLoc = (int2)(get_local_id(0), get_local_id(1));
+    const int2 groupSize = (int2)(get_local_size(0), get_local_size(1));
+    const int2 groupId = (int2)(get_group_id(0), get_group_id(1));
+    const int2 numGroups = (int2)(get_num_groups(0), get_num_groups(1));
+    const int N = groupSize.x * groupSize.y;
+    const int localIdx = localLoc.x + localLoc.y * groupSize.x;
 
-    uchar pixel = read_pixel(src,loc,size);
+    uchar pixel = read_pixel(src, loc, size);
 
     bool changed = false;
 
-    if(pixel > 0){
+    if (pixel > 0) {
         // neighbors (N,NE,E,SE,S,SW,W,NW)
-        uchar8 neighbors = (uchar8)(read_pixel(src, loc + (int2)(0, -1), size),
-                              read_pixel(src, loc + (int2)(1, -1), size),
-                              read_pixel(src, loc + (int2)(1, 0), size),
-                              read_pixel(src, loc + (int2)(1, 1), size),
-                              read_pixel(src, loc + (int2)(0, 1), size),
-                              read_pixel(src, loc + (int2)(-1, 1), size),
-                              read_pixel(src, loc + (int2)(-1, 0), size),
-                              read_pixel(src, loc + (int2)(-1, -1), size));
-        char8 neighborFlag = (neighbors != (char)0);
+        uchar neighbors = 0;
+        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) != 0) << 7));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) != 0) << 6));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) != 0) << 5));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) != 0) << 4));
+        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) != 0) << 3));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) != 0) << 2));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) != 0) << 1));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) != 0) << 0));
+
+
+        // number of 4 connected neighbors
+        uchar n4Neighbors = (neighbors & 0x80) + (neighbors & 0x20) + (neighbors & 0x08) + (neighbors & 0x02);
+
+        if (n4Neighbors == 2) {
+            changed = !(neighbors ^ 0b10000011) || !(neighbors ^ 0b11100000) || !(neighbors ^ 0b00111000) || !(neighbors ^ 0b00001110);
+        } else if (n4Neighbors == 3) {
+            changed = !(neighbors ^ 0b11100011) || !(neighbors ^ 0b11111000) || !(neighbors ^ 0b00111110) || !(neighbors ^ 0b10001111);
+        } else if (n4Neighbors == 4) {
+            changed = !(neighbors ^ 0b11111111);
+        }
 
         // if meet condition then change, else don't change
+        pixel = changed ? 0 : 255;
     }
 
     // write to dst
-    write_pixel(dst,pixel,loc,size);
+    write_pixel(dst, pixel, loc, size);
 
     // check at least one pixel changed
-    localContinueFlags[localIdx]=changed;
+    localContinueFlags[localIdx] = changed;
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    for(int stride = N >>1 ; N > 0; stride>>=1){
-        if(localIdx < stride){
-            localContinueFlags[localIdx] |= localContinueFlags[localIdx+stride];
+    for (int stride = N >> 1; N > 0; stride >>= 1) {
+        if (localIdx < stride) {
+            localContinueFlags[localIdx] |= localContinueFlags[localIdx + stride];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
     // write whether pixel changed in work group
-    if(localIdx==0){
+    if (localIdx == 0) {
         globalContinueFlags[groupId.x + groupId.y * numGroups.x] = localContinueFlags[0];
     }
 }
-
 
 // crossNumbers
 __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, int height) {
