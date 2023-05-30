@@ -104,4 +104,14 @@ class MatrixBuffer {
         if (err)
             throw OclException("Error enqueueReadBuffer", err);
     }
+
+    /**
+     * @brief Use enqueueCopyBuffer to copy buffer in gpu.
+     * @param oclInfo OclInfo contains valid queue.
+     * @param dst destination to be copied.
+     */
+    void copyBuffer(OclInfo& oclInfo,MatrixBuffer& dst){
+        cl_int err = oclInfo.queue.enqueueCopyBuffer(*getClBuffer(),*dst.getClBuffer(),0,0,getLen()*sizeof(T));
+        if(err) throw OclException("Error enqueueCopyBuffer",err);
+    }
 };
