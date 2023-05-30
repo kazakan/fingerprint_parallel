@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
-    MatrixBuffer<BYTE> buffer1(img.width,img.height);
-    MatrixBuffer<BYTE> buffer2(img.width,img.height);
+    MatrixBuffer<BYTE> buffer1(img.width, img.height);
+    MatrixBuffer<BYTE> buffer2(img.width, img.height);
 
     buffer1.createBuffer(oclinfo.ctx);
     buffer2.createBuffer(oclinfo.ctx);
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
         0);
 
     err = oclinfo.queue.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
-    throw OclException("Error while enqueue image",err);
+    throw OclException("Error while enqueue image", err);
 
     // create kernel from source code
     cl::Program::Sources sources;
@@ -87,27 +87,27 @@ int main(int argc, char **argv) {
     throw OclKernelEnqueueError(err);
 
     // ger return value
-    err = oclinfo.queue.enqueueReadBuffer(*buffer1.getClBuffer(), CL_TRUE,0,buffer1.getLen(),buffer1.getData(),nullptr,nullptr);
-    throw OclException("Error enqueueReadBuffer",err);
+    err = oclinfo.queue.enqueueReadBuffer(*buffer1.getClBuffer(), CL_TRUE, 0, buffer1.getLen(), buffer1.getData(), nullptr, nullptr);
+    throw OclException("Error enqueueReadBuffer", err);
     Img resultImg1(buffer1);
-    bool saved = resultImg1.saveImage(pathPrefix+"result1.png");
-    if(!saved){
-        cerr<<"Failed save image"<<endl;
+    bool saved = resultImg1.saveImage(pathPrefix + "result1.png");
+    if (!saved) {
+        cerr << "Failed save image" << endl;
     }
 
-    // run kernel 
+    // run kernel
     err = oclinfo.queue.enqueueNDRangeKernel(dynamicThresholdKernel, cl::NullRange, global_work_size, local_work_size);
     throw OclKernelEnqueueError(err);
 
     // ger return value
-    err = oclinfo.queue.enqueueReadBuffer(*buffer2.getClBuffer(), CL_TRUE,0,buffer2.getLen(),buffer2.getData(),nullptr,nullptr);
-    throw OclException("Error enqueueReadBuffer",err);
+    err = oclinfo.queue.enqueueReadBuffer(*buffer2.getClBuffer(), CL_TRUE, 0, buffer2.getLen(), buffer2.getData(), nullptr, nullptr);
+    throw OclException("Error enqueueReadBuffer", err);
 
     // write image
     Img resultImg2(buffer2);
-    saved = resultImg2.saveImage(pathPrefix+"result2.png");
-    if(!saved){
-        cerr<<"Failed save image"<<endl;
+    saved = resultImg2.saveImage(pathPrefix + "result2.png");
+    if (!saved) {
+        cerr << "Failed save image" << endl;
     }
     FreeImage_DeInitialise();
 

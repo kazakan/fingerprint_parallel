@@ -30,20 +30,23 @@ __kernel void gray(__read_only image2d_t src, __global uchar *dst, int width, in
 }
 
 // normalize
-__kernel void normalize(__global uchar* src, __global uchar *dst, float M, float V, float M0, float V0,int width, int height) {
+__kernel void normalize(__global uchar *src, __global uchar *dst, float M, float V, float M0, float V0, int width, int height) {
     sampler_t _sampler = CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
 
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
-    float pixel = read_pixel(src,loc,size);
+    float pixel = read_pixel(src, loc, size);
 
-    float delta = sqrt(V0*(pixel-M)*(pixel-M)/V);
+    float delta = sqrt(V0 * (pixel - M) * (pixel - M) / V);
     pixel = pixel > M ? M0 + delta : M0 - delta;
 
     uchar pixelByte = 0;
-    if(pixel > 255) pixelByte = 255;
-    else if(pixel <0) pixelByte = 0;
-    else pixelByte = pixel;
+    if (pixel > 255)
+        pixelByte = 255;
+    else if (pixel < 0)
+        pixelByte = 0;
+    else
+        pixelByte = pixel;
 
     write_pixel(dst, pixelByte, loc, size);
 }
@@ -174,7 +177,6 @@ __kernel void rosenfieldThinFourCon(
         neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) != 0) << 2));
         neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) != 0) << 1));
         neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) != 0) << 0));
-
 
         // number of 4 connected neighbors
         uchar n4Neighbors = (neighbors & 0x80) + (neighbors & 0x20) + (neighbors & 0x08) + (neighbors & 0x02);

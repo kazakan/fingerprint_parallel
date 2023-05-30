@@ -1,4 +1,4 @@
-int __sum(__local int* values){
+int __sum(__local int *values) {
     const int local_id = get_local_id(0);
     const int group_size = get_local_size(0);
 

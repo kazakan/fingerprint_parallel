@@ -1,15 +1,15 @@
 #pragma once
 
 #include "CL/opencl.hpp"
-#include "OclInfo.hpp"
 #include "OclException.hpp"
+#include "OclInfo.hpp"
 #include <memory>
 
 /**
  * @brief Class represents Matrix. May contains related Opencl Buffer object.
  *
  */
-template<typename T>
+template <typename T>
 class MatrixBuffer {
   private:
     T *_data = nullptr;
@@ -46,7 +46,7 @@ class MatrixBuffer {
         _buffer = new cl::Buffer(ctx, memFlag, _len * sizeof(T), nullptr, &err);
 
         if (err != CL_SUCCESS) {
-            throw OclException("Error while creating OCL buffer in MatrixBuffer.",err);
+            throw OclException("Error while creating OCL buffer in MatrixBuffer.", err);
         }
     }
 

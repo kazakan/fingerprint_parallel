@@ -3,6 +3,5 @@
 #include "Img.hpp"
 #include "MatrixBuffer.hpp"
 
-class MinutiaeDetector{
-
+class MinutiaeDetector {
 };

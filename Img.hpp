@@ -4,7 +4,7 @@
 #include <string>
 
 extern "C" {
-    #include "FreeImage.h"
+#include "FreeImage.h"
 }
 #include "MatrixBuffer.hpp"
 
@@ -38,19 +38,19 @@ class Img {
         FreeImage_Unload(image);
     }
 
-    Img(MatrixBuffer<BYTE>& matrixBuffer){
+    Img(MatrixBuffer<BYTE> &matrixBuffer) {
         width = matrixBuffer.getWidth();
         height = matrixBuffer.getHeight();
-        size = matrixBuffer.getLen()*4;
+        size = matrixBuffer.getLen() * 4;
 
-        unsigned char* matDat = matrixBuffer.getData();
+        unsigned char *matDat = matrixBuffer.getData();
 
         data = new unsigned char[size];
-        for(int i=0;i< size/4 ;++i){
-            data[i*4] = matDat[i];
-            data[i*4+1] = matDat[i];
-            data[i*4+2] = matDat[i];
-            data[i*4+3] = 255;
+        for (int i = 0; i < size / 4; ++i) {
+            data[i * 4] = matDat[i];
+            data[i * 4 + 1] = matDat[i];
+            data[i * 4 + 2] = matDat[i];
+            data[i * 4 + 3] = 255;
         }
     }
 
@@ -59,8 +59,8 @@ class Img {
         data = nullptr;
     }
 
-    bool saveImage(string filename){
-        return Img::saveImage(filename,data,width,height);
+    bool saveImage(string filename) {
+        return Img::saveImage(filename, data, width, height);
     }
 
     static bool saveImage(string fileName, unsigned char *buffer, int width, int height) {
