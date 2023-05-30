@@ -229,7 +229,7 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, 
                                 read_pixel(src, loc + (int2)(-1, -1), size));
 
     uchar8 rotated = neighbors.s12345670;
-    char8 crossed = neighbors && rotated;
+    char8 crossed = !(neighbors == rotated);
 
     // sum reduction
     char4 s1 = crossed.s0123 + crossed.s4567;
