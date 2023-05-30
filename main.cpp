@@ -92,16 +92,23 @@ int main(int argc, char **argv) {
     Img resultThreshold(buffer2);
     resultThreshold.saveImage(pathPrefix + "resultThreshold.png");
 
-    // cross number
-    detector.applyCrossNumber(buffer2,buffer1);
+    // thinning
+    imgTransformer.applyThinning(buffer2,buffer1);
+
     buffer1.toHost(oclInfo);
-    Img resultCrossNum(buffer1);
+    Img resultThinning(buffer1);
+    resultThinning.saveImage(pathPrefix + "resultThinning.png");
+
+    // cross number
+    detector.applyCrossNumber(buffer1,buffer2);
+    buffer2.toHost(oclInfo);
+    Img resultCrossNum(buffer2);
     resultCrossNum.saveImage(pathPrefix + "resultCrossNum.png");
 
     
-    cout<<buffer1.getLen()<<endl;
-    for(int i=0;i<buffer1.getLen();++i){
-        BYTE val = buffer1.getData()[i];
+    cout<<buffer2.getLen()<<endl;
+    for(int i=0;i<buffer2.getLen();++i){
+        BYTE val = buffer2.getData()[i];
         if(val != 0){
             cout<<"Found type "<< (int )val << " at "<<i<<"\n";
         }
