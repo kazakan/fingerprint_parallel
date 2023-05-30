@@ -219,23 +219,24 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, 
     int2 size = (int2)(width, height);
 
     // neighbors (N,NE,E,SE,S,SW,W,NW)
-    uchar8 neighbors = (uchar8)(read_pixel(src, loc + (int2)(0, -1), size),
-                                read_pixel(src, loc + (int2)(1, -1), size),
-                                read_pixel(src, loc + (int2)(1, 0), size),
-                                read_pixel(src, loc + (int2)(1, 1), size),
-                                read_pixel(src, loc + (int2)(0, 1), size),
-                                read_pixel(src, loc + (int2)(-1, 1), size),
-                                read_pixel(src, loc + (int2)(-1, 0), size),
-                                read_pixel(src, loc + (int2)(-1, -1), size));
+    uchar neighbors = 0;
+    neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
+    neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
+    neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
+    neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
+    neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
+    neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
+    neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
+    neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
 
-    uchar8 rotated = neighbors.s12345670;
-    char8 crossed = !(neighbors == rotated);
+    uchar rotated = (neighbors >> 1) | ((neighbors & 1) << 7);
+    uchar crossed = (rotated ^ neighbors);
 
-    // sum reduction
-    char4 s1 = crossed.s0123 + crossed.s4567;
-    char2 s2 = s1.xy + s1.zw;
+    char count = 0;
+    for (count = 0; crossed; count++)
+        crossed &= crossed - 1;
 
-    int crossNum = (s2.x + s2.y) / 2;
+    count >>= 1;
 
-    write_pixel(dst, crossNum, loc, size);
+    write_pixel(dst, count, loc, size);
 }
