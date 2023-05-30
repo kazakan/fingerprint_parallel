@@ -2,10 +2,19 @@
 
 #include "CL/opencl.hpp"
 
+/**
+ * @brief Exception class for print Opencl error with error code translated for human.
+ * 
+ */
 class OclException : public std::exception {
     public:
     std::string fullMessage;
 
+    /**
+     * @brief 
+     * @param message Your message to show.
+     * @param errCode Error code created by OpenCL methods.
+     */
     OclException(std::string message,cl_int errCode){
         fullMessage = message + " | [ERR CODE] " + clErrorToStr(errCode);
     }
@@ -143,11 +152,19 @@ class OclException : public std::exception {
 }
 };
 
+/**
+ * @brief Exception Class for Opencl Program building.
+ * 
+ */
 class OclBuildException : public OclException{
     public:
     OclBuildException(cl_int errCode) : OclException("Error building program...", errCode){}   
 };
 
+/**
+ * @brief Exception class for Opencl enqueueKernel.
+ * 
+ */
 class OclKernelEnqueueError : public OclException{
     public:
     OclKernelEnqueueError(cl_int errCode) : OclException("Error enqueue kernel...", errCode){}   
