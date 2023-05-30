@@ -30,5 +30,3 @@ class OclInfo {
         return oclinfo;
     }
 };
-
-std::string clErrorToStr(cl_int errorCode);

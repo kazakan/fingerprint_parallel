@@ -1,6 +1,20 @@
-#include "OclInfo.hpp"
+#pragma once
 
-std::string clErrorToStr(cl_int errorCode) {
+#include "CL/opencl.hpp"
+
+class OclException : public std::exception {
+    public:
+    std::string fullMessage;
+
+    OclException(std::string message,cl_int errCode){
+        fullMessage = message + " | [ERR CODE] " + clErrorToStr(errCode);
+    }
+    
+    const char * what () const throw() {
+        return fullMessage.c_str();
+    }
+
+    static std::string clErrorToStr(cl_int errorCode) {
     switch (errorCode) {
     case CL_SUCCESS:
         return "CL_SUCCESS";
@@ -127,3 +141,15 @@ std::string clErrorToStr(cl_int errorCode) {
         return "UNKNOWN ERROR CODE";
     }
 }
+};
+
+class OclBuildException : public OclException{
+    public:
+    OclBuildException(cl_int errCode) : OclException("Error building program...", errCode){}   
+};
+
+class OclKernelEnqueueError : public OclException{
+    public:
+    OclKernelEnqueueError(cl_int errCode) : OclException("Error enqueue kernel...", errCode){}   
+};
+

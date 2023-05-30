@@ -11,6 +11,7 @@ extern "C" {
 #include "FreeImage.h"
 }
 
-#include "OclInfo.hpp"
-#include "MatrixBuffer.hpp"
 #include "Img.hpp"
+#include "MatrixBuffer.hpp"
+#include "OclException.hpp"
+#include "OclInfo.hpp"

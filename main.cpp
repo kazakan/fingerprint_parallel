@@ -12,16 +12,7 @@ string readFile(string path) {
     return string((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
 }
 
-
-int checkErr(int err, int id = 0) {
-    if (err != CL_SUCCESS)
-        cout << "Error : " + clErrorToStr(err) << " pos :" << id << endl;
-    return err;
-}
 // driver code
-
-
-
 int main(int argc, char **argv) {
     string pathPrefix = "../";
     cl_int err = 0;
@@ -62,14 +53,14 @@ int main(int argc, char **argv) {
         0);
 
     err = oclinfo.queue.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
-    checkErr(err, 1);
+    throw OclException("Error while enqueue image",err);
 
     // create kernel from source code
     cl::Program::Sources sources;
     sources.push_back(sourceStr);
     cl::Program program(oclinfo.ctx, sources);
     err = program.build(oclinfo.devices);
-    checkErr(err, 3);
+    throw OclBuildException(err);
 
     cl::Kernel kernel(program, "gray");
     cl::Kernel dynamicThresholdKernel(program, "dynamicThreshold");
@@ -93,11 +84,11 @@ int main(int argc, char **argv) {
 
     // launch kernel
     err = oclinfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
-    checkErr(err, 4);
+    throw OclKernelEnqueueError(err);
 
     // ger return value
     err = oclinfo.queue.enqueueReadBuffer(*buffer1.getClBuffer(), CL_TRUE,0,buffer1.getLen(),buffer1.getData(),nullptr,nullptr);
-    checkErr(err, 5);
+    throw OclException("Error enqueueReadBuffer",err);
     Img resultImg1(buffer1);
     bool saved = resultImg1.saveImage(pathPrefix+"result1.png");
     if(!saved){
@@ -106,11 +97,11 @@ int main(int argc, char **argv) {
 
     // run kernel 
     err = oclinfo.queue.enqueueNDRangeKernel(dynamicThresholdKernel, cl::NullRange, global_work_size, local_work_size);
-    checkErr(err, 6);
+    throw OclKernelEnqueueError(err);
 
     // ger return value
     err = oclinfo.queue.enqueueReadBuffer(*buffer2.getClBuffer(), CL_TRUE,0,buffer2.getLen(),buffer2.getData(),nullptr,nullptr);
-    checkErr(err, 7);
+    throw OclException("Error enqueueReadBuffer",err);
 
     // write image
     Img resultImg2(buffer2);
