@@ -17,3 +17,4 @@ extern "C" {
 #include "OclInfo.hpp"
 #include "ImgTransform.hpp"
 #include "ImgStatics.hpp"
+#include "MinutiaeDetector.hpp"

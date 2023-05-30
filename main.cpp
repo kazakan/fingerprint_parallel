@@ -14,6 +14,9 @@ string readFile(string path) {
 
 // driver code
 int main(int argc, char **argv) {
+    ios::sync_with_stdio(0);
+    cout.tie(0);
+
     string pathPrefix = "../";
     cl_int err = 0;
     FreeImage_Initialise(true);
@@ -23,7 +26,7 @@ int main(int argc, char **argv) {
     cout << "Running" << endl;
     // load image
 
-    Img img(pathPrefix + "icon.png");
+    Img img(pathPrefix + "fingerprint.BMP");
     cout << "Loaded Image" << endl;
 
     // init opencl
@@ -36,6 +39,8 @@ int main(int argc, char **argv) {
     cout << "kernel file loadded" << endl;
 
     ImgTransform imgTransformer(oclInfo,transformSource);
+    ImgStatics imgStatics(oclInfo,staticsSoure);
+    MinutiaeDetector detector(oclInfo,transformSource);
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
@@ -58,20 +63,51 @@ int main(int argc, char **argv) {
     if(err) throw OclException("Error while enqueue image", err);
 
     imgTransformer.toGrayScale(climg,buffer1);
-    imgTransformer.normalize(buffer2,buffer1,128,5,128,5);
+    buffer1.toHost(oclInfo);
+    Img resultGray(buffer1);
+    resultGray.saveImage(pathPrefix + "resultGray.png");
+
+    // normalize
+    float mean = imgStatics.mean(buffer1);
+    float var = imgStatics.var(buffer1);
+
+    cout<<"Mean : "<<mean<<" var : "<<var<<endl;
+
+    imgTransformer.normalize(buffer1,buffer2,128,2000,mean,var);
+    buffer2.toHost(oclInfo);
+    Img resultNormalize(buffer2);
+    resultNormalize.saveImage(pathPrefix + "resultNormalize.png");
+
+    // gaussian filter
     imgTransformer.applyGaussianFilter(buffer2,buffer1);
+
+    buffer1.toHost(oclInfo);
+    Img resultGaussian(buffer1);
+    resultGaussian.saveImage(pathPrefix + "resultGaussian.png");
+
+    // dynamic thresholding
     imgTransformer.applyDynamicThresholding(buffer1,buffer2,9);
 
-    // ger return value
-    err = oclInfo.queue.enqueueReadBuffer(*buffer2.getClBuffer(), CL_TRUE, 0, buffer2.getLen(), buffer2.getData(), nullptr, nullptr);
-    if(err) throw OclException("Error enqueueReadBuffer", err);
+    buffer2.toHost(oclInfo);
+    Img resultThreshold(buffer2);
+    resultThreshold.saveImage(pathPrefix + "resultThreshold.png");
 
-    // write image
-    Img resultImg2(buffer2);
-    bool saved = resultImg2.saveImage(pathPrefix + "result222.png");
-    if (!saved) {
-        cerr << "Failed save image" << endl;
+    // cross number
+    detector.applyCrossNumber(buffer2,buffer1);
+    buffer1.toHost(oclInfo);
+    Img resultCrossNum(buffer1);
+    resultCrossNum.saveImage(pathPrefix + "resultCrossNum.png");
+
+    
+    cout<<buffer1.getLen()<<endl;
+    for(int i=0;i<buffer1.getLen();++i){
+        BYTE val = buffer1.getData()[i];
+        if(val != 0){
+            cout<<"Found type "<< (int )val << " at "<<i<<"\n";
+        }
     }
+
+    
     FreeImage_DeInitialise();
 
     // delete [] outImgData;
