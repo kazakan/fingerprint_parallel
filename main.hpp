@@ -15,3 +15,5 @@ extern "C" {
 #include "MatrixBuffer.hpp"
 #include "OclException.hpp"
 #include "OclInfo.hpp"
+#include "ImgTransform.hpp"
+#include "ImgStatics.hpp"
