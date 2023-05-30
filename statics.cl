@@ -26,7 +26,7 @@ __kernel void sum(__global uchar *input, __global float *output, __local float *
 
     tmp[local_id] = global_id < inputSize ? input[global_id] : 0;
 
-    int result = __sum(tmp);
+    float result = __sum(tmp);
 
     // write to global mem
     if (local_id == 0) {
@@ -43,12 +43,12 @@ __kernel void squareSum(__global uchar *input, __global float *output, __local f
     int local_id = get_local_id(0);
     int group_id = get_group_id(0);
 
-    int val = input[global_id];
+    float val = input[global_id];
     val *= val;
 
     tmp[local_id] = global_id < inputSize ? val : 0;
 
-    int result = __sum(tmp);
+    float result = __sum(tmp);
 
     // write to global mem
     if (local_id == 0) {
