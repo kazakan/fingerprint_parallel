@@ -81,4 +81,26 @@ class MatrixBuffer {
      * @return Related OpenCl Buffer
      */
     cl::Buffer *getClBuffer() { return _buffer; }
+
+    /**
+     * @brief Copy Host memory to Gpu.
+     * @param oclInfo OclInfo contains valid queue.
+     * @param blocking if false, only enqueue job and continue. Default=true.
+     */
+    void toGpu(OclInfo &oclInfo, bool blocking = true) {
+        cl_int err = oclInfo.queue.enqueueWriteBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), getData(), nullptr, nullptr);
+        if (err)
+            throw OclException("Error enqueueWriteBuffer", err);
+    }
+
+    /**
+     * @brief Copy Gpu memory to host.
+     * @param oclInfo OclInfo contains valid queue.
+     * @param blocking if false, only enqueue job and continue. Default=true.
+     */
+    void toHost(OclInfo &oclInfo, bool blocking = true) {
+        cl_int err = oclInfo.queue.enqueueReadBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), getData(), nullptr, nullptr);
+        if (err)
+            throw OclException("Error enqueueReadBuffer", err);
+    }
 };
