@@ -14,7 +14,7 @@ void ImgTransform::toGrayScale(cl::Image2D &src, MatrixBuffer<BYTE> &dst) {
     cl::Kernel kernel(program,"gray");
 
     kernel.setArg(0, src); 
-    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, dst.getWidth()); 
     kernel.setArg(3, dst.getHeight());
 
@@ -27,13 +27,17 @@ void ImgTransform::toGrayScale(cl::Image2D &src, MatrixBuffer<BYTE> &dst) {
     if(err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,float M0, float V0, float M,float V) {
      cl::Kernel kernel(program,"normalize");
 
-    kernel.setArg(0, src); 
-    kernel.setArg(1, dst.getClBuffer());
-    kernel.setArg(2, dst.getWidth()); 
-    kernel.setArg(3, dst.getHeight());
+    kernel.setArg(0, *src.getClBuffer()); 
+    kernel.setArg(1, *dst.getClBuffer());
+    kernel.setArg(2, M);
+    kernel.setArg(3, V);
+    kernel.setArg(4, M0);
+    kernel.setArg(5, V0); 
+    kernel.setArg(6, dst.getWidth());
+    kernel.setArg(6, dst.getHeight());
 
     const size_t wsize = 8;
     cl::NDRange local_work_size(wsize, wsize);
@@ -48,8 +52,8 @@ void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
 void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
     cl::Kernel kernel(program,"dynamicThreshold");
 
-    kernel.setArg(0, src.getClBuffer());
-    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(0, *src.getClBuffer());
+    kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, src.getWidth());
     kernel.setArg(3, src.getHeight());
     kernel.setArg(4, 9);
@@ -66,8 +70,8 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffe
 void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
         cl::Kernel kernel(program,"normalize");
 
-    kernel.setArg(0, src); 
-    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(0, *src.getClBuffer()); 
+    kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, dst.getWidth()); 
     kernel.setArg(3, dst.getHeight());
 
@@ -83,8 +87,8 @@ void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &ds
 void ImgTransform::applyGaussianFilter(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
         cl::Kernel kernel(program,"gaussian");
 
-    kernel.setArg(0, src); 
-    kernel.setArg(1, dst.getClBuffer());
+    kernel.setArg(0, *src.getClBuffer()); 
+    kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, dst.getWidth()); 
     kernel.setArg(3, dst.getHeight());
 

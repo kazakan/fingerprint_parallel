@@ -9,7 +9,7 @@ class ImgStatics{
     cl::Program program;
     public:
     ImgStatics(OclInfo oclInfo, string source);
-    void sum(MatrixBuffer& src, MatrixBuffer& dst);
-    void mean(MatrixBuffer& src, MatrixBuffer& dst);
-    void var(MatrixBuffer& src, MatrixBuffer& dst);
+    void sum(MatrixBuffer<BYTE>& src, MatrixBuffer<float>& dst);
+    void mean(MatrixBuffer<BYTE>& src, MatrixBuffer<float>& dst);
+    void var(MatrixBuffer<BYTE>& src, MatrixBuffer<float>& dst);
 };

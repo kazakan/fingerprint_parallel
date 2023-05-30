@@ -1,6 +1,6 @@
 #include "ImgStatics.hpp"
 
-void ImgStatics::sum(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgStatics::sum(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
         cl::Kernel kernel(program,"gray");
 
     kernel.setArg(0, src); 
@@ -17,9 +17,9 @@ void ImgStatics::sum(MatrixBuffer &src, MatrixBuffer &dst) {
     if(err) throw OclKernelEnqueueError(err);
 }
 
-void ImgStatics::mean(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgStatics::mean(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
 }
 
-void ImgStatics::var(MatrixBuffer &src, MatrixBuffer &dst) {
+void ImgStatics::var(MatrixBuffer<BYTE> &src, MatrixBuffer<float> &dst) {
 
 }
