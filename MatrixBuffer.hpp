@@ -50,13 +50,35 @@ class MatrixBuffer {
         }
     }
 
+    /**
+     * @brief Get width of matrix.
+     * @return Width of matrix
+     */
     unsigned int getWidth() { return _width; }
+
+    /**
+     * @brief Get height of matrix.
+     * @return Height of matrix
+     */
     unsigned int getHeight() { return _height; }
+
+    /**
+     * @brief Get numbers of elements in matrix. (width*height)
+     * @return width*height
+     */
     unsigned int getLen() { return _len; }
 
+    /**
+     * @brief  Get pointer that points first element of matrix.
+     * @return Pointer to first element.
+     */
     T *getData() {
         return _data;
     }
 
+    /**
+     * @brief Get Related OpenCL Buffer.
+     * @return Related OpenCl Buffer
+     */
     cl::Buffer *getClBuffer() { return _buffer; }
 };
