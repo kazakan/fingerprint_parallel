@@ -32,6 +32,7 @@ class MatrixBuffer {
 
     ~MatrixBuffer() {
         delete[] _data;
+        _data = nullptr;
         if (_buffer != nullptr)
             delete _buffer;
     }
@@ -88,7 +89,7 @@ class MatrixBuffer {
      * @param blocking if false, only enqueue job and continue. Default=true.
      */
     void toGpu(OclInfo &oclInfo, bool blocking = true) {
-        cl_int err = oclInfo.queue.enqueueWriteBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), getData(), nullptr, nullptr);
+        cl_int err = oclInfo.queue.enqueueWriteBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), (void*) getData(), nullptr, nullptr);
         if (err)
             throw OclException("Error enqueueWriteBuffer", err);
     }
@@ -99,7 +100,7 @@ class MatrixBuffer {
      * @param blocking if false, only enqueue job and continue. Default=true.
      */
     void toHost(OclInfo &oclInfo, bool blocking = true) {
-        cl_int err = oclInfo.queue.enqueueReadBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), getData(), nullptr, nullptr);
+        cl_int err = oclInfo.queue.enqueueReadBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), (void*) getData(), nullptr, nullptr);
         if (err)
             throw OclException("Error enqueueReadBuffer", err);
     }
