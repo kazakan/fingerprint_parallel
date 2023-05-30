@@ -170,25 +170,50 @@ __kernel void rosenfieldThinFourCon(
     if (pixel > 0) {
         // neighbors (N,NE,E,SE,S,SW,W,NW)
         uchar neighbors = 0;
-        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size)  ? 1 : 0) << 7));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size)  ? 1 : 0) << 6));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size)  ? 1 : 0) << 5));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size)  ? 1 : 0) << 4));
-        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size)  ? 1 : 0) << 3));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size)  ? 1 : 0) << 2));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size)  ? 1 : 0) << 1));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size)  ? 1 : 0) << 0));
+        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
+        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
 
         // number of 4 connected neighbors
         uchar n4Neighbors = (neighbors & 0x80 ? 1 : 0) + (neighbors & 0x20 ? 1 : 0) + (neighbors & 0x08 ? 1 : 0) + (neighbors & 0x02 ? 1 : 0);
 
+        switch (dir) {
+        case 0: // N
+            if (n4Neighbors == 2) {
+                changed = (neighbors == 0b00111000) || (neighbors == 0b00001110);
+            } else if (n4Neighbors == 3) {
+                changed =  (neighbors == 0b00111110);
+            } 
+            break;
 
-        if (n4Neighbors == 2) {
-            changed = (neighbors == 0b10000011) || (neighbors == 0b11100000) || (neighbors == 0b00111000) || (neighbors == 0b00001110);
-        } else if (n4Neighbors == 3) {
-            changed = (neighbors == 0b11100011) || (neighbors == 0b11111000) || (neighbors == 0b00111110) || (neighbors == 0b10001111);
-        } else if (n4Neighbors == 4) {
-            changed = (neighbors == 0b11111111);
+        case 1: // E
+            if (n4Neighbors == 2) {
+                changed = (neighbors == 0b10000011) || (neighbors == 0b00001110);
+            } else if (n4Neighbors == 3) {
+                changed =  (neighbors == 0b10001111);
+            } 
+            break;
+
+        case 2: // S
+            if (n4Neighbors == 2) {
+                changed = (neighbors == 0b10000011) ;
+            } else if (n4Neighbors == 3) {
+                changed = (neighbors == 0b11100011)  ;
+            } 
+            break;
+
+        case 3: // W
+            if (n4Neighbors == 2) {
+                changed =   (neighbors == 0b11100000) || (neighbors == 0b00111000);
+            } else if (n4Neighbors == 3) {
+                changed =  (neighbors == 0b11111000)  ;
+            } 
+            break;
         }
 
         // if meet condition then change, else don't change
@@ -240,14 +265,14 @@ __kernel void rosenfieldThinEightCon(
     if (pixel > 0) {
         // neighbors (N,NE,E,SE,S,SW,W,NW)
         uchar neighbors = 0;
-        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size)  ? 1 : 0) << 7));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size)  ? 1 : 0) << 6));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size)  ? 1 : 0) << 5));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size)  ? 1 : 0) << 4));
-        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size)  ? 1 : 0) << 3));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size)  ? 1 : 0) << 2));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size)  ? 1 : 0) << 1));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size)  ? 1 : 0) << 0));
+        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
+        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
+        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
+        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
 
         // number of 8 connected neighbors
         uchar neighborsBits = neighbors;
@@ -255,18 +280,17 @@ __kernel void rosenfieldThinEightCon(
         for (n8Neighbors = 0; neighborsBits; n8Neighbors++)
             neighborsBits &= neighborsBits - 1;
 
-
-        if ((n8Neighbors > 1) && (n8Neighbors < 7)){
-            uchar pattern = (1 << n8Neighbors)-1;
+        if ((n8Neighbors > 1) && (n8Neighbors < 7)) {
+            uchar pattern = (1 << n8Neighbors) - 1;
             changed = true;
-            for(int i=0;i<8-n8Neighbors;++i){
-                if(neighbors == pattern){
+            for (int i = 0; i < 8 - n8Neighbors; ++i) {
+                if (neighbors == pattern) {
                     changed = false;
                     break;
                 };
                 pattern <<= 1;
             }
-        }else if(n8Neighbors == 8 || n8Neighbors == 7) {
+        } else if (n8Neighbors == 8 || n8Neighbors == 7) {
             changed = true;
         }
 
