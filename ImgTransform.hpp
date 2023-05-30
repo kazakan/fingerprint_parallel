@@ -9,6 +9,7 @@ class ImgTransform {
   private:
     OclInfo oclInfo;
     cl::Program program;
+    bool thinningOneIter(MatrixBuffer<BYTE>& src,MatrixBuffer<BYTE>& dst);
 
   public:
     ImgTransform(OclInfo oclInfo, string source);

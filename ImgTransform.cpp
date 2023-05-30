@@ -84,7 +84,7 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffe
         throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+bool ImgTransform::thinningOneIter(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
     cl::Kernel kernel(program, "rosenfieldThinFourCon");
 
     const size_t groupSize = 8;
@@ -95,20 +95,53 @@ void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &ds
     cl::NDRange n_groups((W + (groupSize -1))/groupSize,(H + (groupSize -1))/groupSize);
     cl::NDRange global_work_size(groupSize*n_groups.get()[0], groupSize*n_groups.get()[1]);
 
-    MatrixBuffer<BYTE> globalFlag(8, 8);
+    MatrixBuffer<BYTE> globalFlag(n_groups.get()[0], n_groups.get()[1]);
     globalFlag.createBuffer(oclInfo.ctx);
 
     kernel.setArg(0, *src.getClBuffer());
     kernel.setArg(1, *dst.getClBuffer());
     kernel.setArg(2, dst.getWidth());
     kernel.setArg(3, dst.getHeight());
-    kernel.setArg(4, *globalFlag.getClBuffer());             // localContinueFlags
+    kernel.setArg(4, *globalFlag.getClBuffer());             // ContinueFlags
     kernel.setArg(5, sizeof(BYTE) * groupSize * groupSize, nullptr); // localContinueFlags
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
 
     if (err)
         throw OclKernelEnqueueError(err);
+
+    globalFlag.toHost(oclInfo);
+    bool flag = false; // whether a pixel changed
+    for(int i=0;i<globalFlag.getLen();++i){
+        flag |= globalFlag.getData()[i]; 
+    }
+
+    // if at least one pixel changed, not finished.
+    return !flag;
+}
+
+void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+    MatrixBuffer<BYTE> input(src.getWidth(),src.getHeight());
+    MatrixBuffer<BYTE> output(dst.getWidth(),dst.getHeight());
+    input.createBuffer(oclInfo.ctx);
+    output.createBuffer(oclInfo.ctx);
+
+    //copy src to input
+    src.copyBuffer(oclInfo,input);
+
+    bool done = false;
+    do{
+
+        done = thinningOneIter(input,output);
+        if(!done){
+            // copy output to input
+            output.copyBuffer(oclInfo,input);
+        }
+    }
+    while(!done);
+
+    // copy output to dst
+    output.copyBuffer(oclInfo,dst);
 }
 
 void ImgTransform::applyGaussianFilter(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
