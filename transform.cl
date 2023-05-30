@@ -187,32 +187,32 @@ __kernel void rosenfieldThinFourCon(
             if (n4Neighbors == 2) {
                 changed = (neighbors == 0b00111000) || (neighbors == 0b00001110);
             } else if (n4Neighbors == 3) {
-                changed =  (neighbors == 0b00111110);
-            } 
+                changed = (neighbors == 0b00111110);
+            }
             break;
 
         case 1: // E
             if (n4Neighbors == 2) {
                 changed = (neighbors == 0b10000011) || (neighbors == 0b00001110);
             } else if (n4Neighbors == 3) {
-                changed =  (neighbors == 0b10001111);
-            } 
+                changed = (neighbors == 0b10001111);
+            }
             break;
 
         case 2: // S
             if (n4Neighbors == 2) {
-                changed = (neighbors == 0b10000011) ;
+                changed = (neighbors == 0b10000011);
             } else if (n4Neighbors == 3) {
-                changed = (neighbors == 0b11100011)  ;
-            } 
+                changed = (neighbors == 0b11100011);
+            }
             break;
 
         case 3: // W
             if (n4Neighbors == 2) {
-                changed =   (neighbors == 0b11100000) || (neighbors == 0b00111000);
+                changed = (neighbors == 0b11100000) || (neighbors == 0b00111000);
             } else if (n4Neighbors == 3) {
-                changed =  (neighbors == 0b11111000)  ;
-            } 
+                changed = (neighbors == 0b11111000);
+            }
             break;
         }
 
@@ -246,6 +246,7 @@ __kernel void rosenfieldThinEightCon(
     __global uchar *dst,
     int width,
     int height,
+    int dir,
     __global uchar *globalContinueFlags,
     __local uchar *localContinueFlags) {
 
@@ -280,18 +281,36 @@ __kernel void rosenfieldThinEightCon(
         for (n8Neighbors = 0; neighborsBits; n8Neighbors++)
             neighborsBits &= neighborsBits - 1;
 
-        if ((n8Neighbors > 1) && (n8Neighbors < 7)) {
-            uchar pattern = (1 << n8Neighbors) - 1;
-            changed = true;
-            for (int i = 0; i < 8 - n8Neighbors; ++i) {
-                if (neighbors == pattern) {
-                    changed = false;
-                    break;
-                };
-                pattern <<= 1;
+        uchar borderFlag = 0;
+        switch (dir) {
+        case 0: // N
+            borderFlag = 0b10000000;
+            break;
+        case 1: // E
+            borderFlag = 0b00100000;
+            break;
+        case 2: // S
+            borderFlag = 0b00001000;
+            break;
+        case 3: // W
+            borderFlag = 0b00000010;
+            break;
+        }
+
+        if ((neighbors & borderFlag) != 0) {
+            if ((n8Neighbors > 1) && (n8Neighbors < 7)) {
+                uchar pattern = (1 << n8Neighbors) - 1;
+                changed = true;
+                for (int i = 0; i < 8 - n8Neighbors; ++i) {
+                    if (neighbors == pattern) {
+                        changed = false;
+                        break;
+                    };
+                    pattern <<= 1;
+                }
+            } else if (n8Neighbors == 8 || n8Neighbors == 7) {
+                changed = true;
             }
-        } else if (n8Neighbors == 8 || n8Neighbors == 7) {
-            changed = true;
         }
 
         // if meet condition then change, else don't change
