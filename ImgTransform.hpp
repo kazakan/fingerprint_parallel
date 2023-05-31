@@ -68,8 +68,9 @@ class ImgTransform {
      * @param src Original image.
      * @param dst Where result be saved.
      * @param blockSize One side length of block.
+     * @param scale scale factor of threshold. Threshold is mean*scale. Default = 1.05
      */
-    void applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst, int blockSize);
+    void applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst, int blockSize, float scale = 1.05);
 
     /**
      * @brief Apply Rosenfield 4 connectivity thinning algorithm.

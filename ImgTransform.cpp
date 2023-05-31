@@ -81,7 +81,7 @@ void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst, f
         throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst, int blockSize) {
+void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst, int blockSize, float scale) {
     cl::Kernel kernel(program, "dynamicThreshold");
 
     const size_t groupSize = 8;
@@ -97,6 +97,7 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src, MatrixBuffe
     kernel.setArg(2, src.getWidth());
     kernel.setArg(3, src.getHeight());
     kernel.setArg(4, blockSize);
+    kernel.setArg(5, scale);
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, global_work_size, local_work_size);
 

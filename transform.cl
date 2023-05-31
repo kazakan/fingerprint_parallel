@@ -65,7 +65,7 @@ __kernel void negate(__global uchar *src, __global uchar *dst, int width, int he
 
 
 // dynamicThreshold
-__kernel void dynamicThreshold(__global uchar *src, __global uchar *dst, int width, int height, int blockSize) {
+__kernel void dynamicThreshold(__global uchar *src, __global uchar *dst, int width, int height, int blockSize,float scale) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
@@ -81,6 +81,7 @@ __kernel void dynamicThreshold(__global uchar *src, __global uchar *dst, int wid
     }
 
     float mean = sum / ((2 * halfBlockSize + 1) * (2 * halfBlockSize + 1));
+    mean*=scale;
     pixel = pixel > mean ? 255 : 0;
 
     write_pixel(dst, pixel, loc, size);
