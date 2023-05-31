@@ -89,14 +89,14 @@ void run1() {
     resultGaussian.saveImage(pathPrefix + "resultGaussian.png");
 
     // dynamic thresholding
-    imgTransformer.applyDynamicThresholding(buffer1, buffer2, 3);
+    imgTransformer.applyDynamicThresholding(buffer1, buffer2, 3,1.05);
 
     buffer2.toHost(oclInfo);
     Img resultThreshold(buffer2);
     resultThreshold.saveImage(pathPrefix + "resultThreshold.png");
 
     // thinning
-    imgTransformer.applyThinning(buffer2, buffer1);
+    imgTransformer.applyThinning8(buffer2, buffer1);
 
     buffer1.toHost(oclInfo);
     Img resultThinning(buffer1);
@@ -105,16 +105,19 @@ void run1() {
     // cross number
     detector.applyCrossNumber(buffer1, buffer2);
     buffer2.toHost(oclInfo);
-    Img resultCrossNum(buffer2);
-    resultCrossNum.saveImage(pathPrefix + "resultCrossNum.png");
+    
 
-    cout << buffer1.getLen() << endl;
-    for (int i = 0; i < buffer1.getLen(); ++i) {
-        BYTE val = buffer1.getData()[i];
+    cout << buffer2.getLen() << endl;
+    for (int i = 0; i < buffer2.getLen(); ++i) {
+        BYTE val = buffer2.getData()[i];
         if (val != 0) {
             cout << "Found type " << (int)val << " at " << i << "\n";
         }
+        buffer2.getData()[i] = val*40; // for visualize
     }
+
+    Img resultCrossNum(buffer2);
+    resultCrossNum.saveImage(pathPrefix + "resultCrossNum.png");
 
     FreeImage_DeInitialise();
 }
@@ -229,7 +232,7 @@ void run2() {
 int main(int argc, char **argv) {
     cout << argv[0] << endl;
 
-    //run1();
-    run2();
+    run1();
+    //run2();
     return 0;
 }
