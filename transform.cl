@@ -355,7 +355,9 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, 
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
-    // neighbors (N,NE,E,SE,S,SW,W,NW)
+    uchar pixel = read_pixel(src, loc , size);
+    if(pixel!=0){
+        // neighbors (N,NE,E,SE,S,SW,W,NW)
     uchar neighbors = 0;
     neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
     neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
@@ -376,4 +378,8 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, 
     count >>= 1;
 
     write_pixel(dst, count, loc, size);
+    }else{
+        write_pixel(dst, 0, loc, size);
+    }
+    
 }
