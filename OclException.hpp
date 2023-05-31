@@ -23,6 +23,11 @@ class OclException : public std::exception {
         return fullMessage.c_str();
     }
 
+    /**
+     * @brief Translate opencl error code to human readable.
+     * @param errorCode Opencl error code
+     * @return String represents errorCode
+     */
     static std::string clErrorToStr(cl_int errorCode) {
         switch (errorCode) {
         case CL_SUCCESS:
