@@ -311,19 +311,17 @@ __kernel void rosenfieldThinEightCon(
             break;
         }
 
-        if ((neighbors & borderFlag) != 0) {
-            if ((n8Neighbors > 1) && (n8Neighbors < 7)) {
+        if ((neighbors & borderFlag) == 0) {
+            if ((n8Neighbors > 1) && (n8Neighbors <= 7)) {
                 uchar pattern = (1 << n8Neighbors) - 1;
-                changed = true;
-                for (int i = 0; i < 8 - n8Neighbors; ++i) {
+                changed = false;
+                for (int i = 0; i < 8; ++i) {
                     if (neighbors == pattern) {
-                        changed = false;
+                        changed = true;
                         break;
                     };
-                    pattern <<= 1;
+                    pattern = (pattern >> 1) | ((pattern & 1) << 7);
                 }
-            } else if (n8Neighbors == 8 || n8Neighbors == 7) {
-                changed = true;
             }
         }
 
