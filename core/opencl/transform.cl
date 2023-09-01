@@ -11,6 +11,7 @@ void write_pixel(__global uchar *img, char val, int2 loc, int2 size) {
     }
 }
 
+
 /**
  * @brief get 2d image, return flattened image have one gray channel.
  *

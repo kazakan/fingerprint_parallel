@@ -11,15 +11,14 @@ int __sum(__local float *values) {
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
-
     return values[0];
 }
 
 /**
  * @brief Calculate sum of elements in a work group.
  */
-__kernel void sum(__global uchar *input, __global float *output, __local float *tmp, int inputSize) {
-
+__kernel void sum(__global uchar *input, __global float *output,
+                  __local float *tmp, int inputSize) {
     int global_id = get_global_id(0);
     int local_id = get_local_id(0);
     int group_id = get_group_id(0);
@@ -37,8 +36,8 @@ __kernel void sum(__global uchar *input, __global float *output, __local float *
 /**
  * @brief Calculate sum of elements^2 in a work group.
  */
-__kernel void squareSum(__global uchar *input, __global float *output, __local float *tmp, int inputSize) {
-
+__kernel void squareSum(__global uchar *input, __global float *output,
+                        __local float *tmp, int inputSize) {
     int global_id = get_global_id(0);
     int local_id = get_local_id(0);
     int group_id = get_group_id(0);

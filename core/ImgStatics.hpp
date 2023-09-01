@@ -8,17 +8,17 @@
  *
  */
 class ImgStatics {
-  private:
+   private:
     OclInfo oclInfo;
     cl::Program program;
 
-  public:
-    ImgStatics(OclInfo oclInfo, string source);
+   public:
+    ImgStatics(OclInfo oclInfo);
 
     /**
      * @brief Sum all the elements in buffer.
      *        This copies result from gpu because needs of aggregation
-     *        across work groups. 
+     *        across work groups.
      *
      * @param src MatrixBuffer<BYTE> to calculate
      * @return sum of elements
@@ -28,7 +28,7 @@ class ImgStatics {
     /**
      * @brief Get average of elements in buffer.
      *        This copies result from gpu because needs of aggregation
-     *        across work groups. 
+     *        across work groups.
      * @param src MatrixBuffer<BYTE> to calculate
      * @return Average of elements
      */
@@ -37,7 +37,7 @@ class ImgStatics {
     /**
      * @brief Get variance of elements in buffer.
      *        This copies result from gpu because needs of aggregation
-     *        across work groups. 
+     *        across work groups.
      * @param src MatrixBuffer<BYTE> to calculate
      * @return Variance of elements
      */
@@ -46,7 +46,7 @@ class ImgStatics {
     /**
      * @brief Get Sum of x^2 in buffer.
      *        This copies result from gpu because needs of aggregation
-     *        across work groups. 
+     *        across work groups.
      * @param src MatrixBuffer<BYTE> to calculate
      * @return Sum of x^2 in elements
      */

@@ -1,14 +1,15 @@
 #include "ImgStatics.hpp"
 
-ImgStatics::ImgStatics(OclInfo oclInfo, string source) {
+#include "ocl_core_src.hpp"
+
+ImgStatics::ImgStatics(OclInfo oclInfo) {
     this->oclInfo = oclInfo;
     cl::Program::Sources sources;
-    sources.push_back(source);
+    sources.push_back(ocl_src_statics);
     this->program = cl::Program(oclInfo.ctx, sources);
 
     cl_int err = this->program.build(oclInfo.devices);
-    if (err)
-        throw OclBuildException(err);
+    if (err) throw OclBuildException(err);
 }
 
 float ImgStatics::sum(MatrixBuffer<BYTE> &src) {
@@ -27,10 +28,11 @@ float ImgStatics::sum(MatrixBuffer<BYTE> &src) {
     kernel.setArg(2, group_size * sizeof(cl_float), NULL);
     kernel.setArg(3, N);
 
-    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(global_work_size), cl::NDRange(group_size));
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(
+        kernel, cl::NullRange, cl::NDRange(global_work_size),
+        cl::NDRange(group_size));
 
-    if (err)
-        throw OclKernelEnqueueError(err);
+    if (err) throw OclKernelEnqueueError(err);
 
     tmp.toHost(oclInfo);
 
@@ -73,10 +75,11 @@ float ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
     kernel.setArg(2, group_size * sizeof(float), NULL);
     kernel.setArg(3, N);
 
-    cl_int err = oclInfo.queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(global_work_size), cl::NDRange(group_size));
+    cl_int err = oclInfo.queue.enqueueNDRangeKernel(
+        kernel, cl::NullRange, cl::NDRange(global_work_size),
+        cl::NDRange(group_size));
 
-    if (err)
-        throw OclKernelEnqueueError(err);
+    if (err) throw OclKernelEnqueueError(err);
 
     tmp.toHost(oclInfo);
 

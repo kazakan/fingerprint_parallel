@@ -11,7 +11,7 @@ extern "C" {
 using namespace std;
 
 class Img {
-  public:
+   public:
     unsigned int width;
     unsigned int height;
     unsigned int size;
@@ -21,8 +21,7 @@ class Img {
     Img(string path) : path(path) {
         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(path.c_str(), 0);
         FIBITMAP *image = FreeImage_Load(format, path.c_str(), PNG_DEFAULT);
-        if (image == nullptr)
-            throw runtime_error("Cannot Load image");
+        if (image == nullptr) throw runtime_error("Cannot Load image");
 
         FIBITMAP *tmp = image;
         image = FreeImage_ConvertTo32Bits(image);
@@ -63,13 +62,13 @@ class Img {
         return Img::saveImage(filename, data, width, height);
     }
 
-    static bool saveImage(string fileName, unsigned char *buffer, int width, int height) {
+    static bool saveImage(string fileName, unsigned char *buffer, int width,
+                          int height) {
         FREE_IMAGE_FORMAT format =
             FreeImage_GetFIFFromFilename(fileName.c_str());
-        FIBITMAP *image = FreeImage_ConvertFromRawBits((BYTE *)buffer,
-                                                       width,
-                                                       height, width * 4, 32,
-                                                       0xFF000000, 0x00FF0000, 0x0000FF00);
+        FIBITMAP *image = FreeImage_ConvertFromRawBits(
+            (BYTE *)buffer, width, height, width * 4, 32, 0xFF000000,
+            0x00FF0000, 0x0000FF00);
         return FreeImage_Save(format, image, fileName.c_str());
     }
 };

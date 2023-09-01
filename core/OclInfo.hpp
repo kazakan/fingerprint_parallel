@@ -1,10 +1,11 @@
 #pragma once
 
-#include "CL/opencl.hpp"
 #include <vector>
 
+#include "CL/opencl.hpp"
+
 class OclInfo {
-  public:
+   public:
     std::vector<cl::Platform> platforms;
     cl::Context ctx;
     std::vector<cl::Device> devices;
@@ -15,17 +16,14 @@ class OclInfo {
         cl::Platform::get(&platformList);
 
         cl_context_properties cprops[] = {
-            CL_CONTEXT_PLATFORM,
-            (cl_context_properties)(platformList[0])(),
-            0};
+            CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
 
         cl::Context ctx(CL_DEVICE_TYPE_GPU, cprops);
 
         std::vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
         cl::CommandQueue queue(ctx, devices[0], 0);
 
-        OclInfo oclinfo = {
-            platformList, ctx, devices, queue};
+        OclInfo oclinfo = {platformList, ctx, devices, queue};
 
         return oclinfo;
     }

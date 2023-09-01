@@ -5,16 +5,15 @@
 
 /**
  * @brief Class extracts minutiaes from preprocessed binary image.
- * 
  */
 class MinutiaeDetector {
-  private:
+   private:
     OclInfo oclInfo;
     cl::Program program;
 
-  public:
-    MinutiaeDetector(OclInfo oclInfo, string source);
-    
+   public:
+    MinutiaeDetector(OclInfo oclInfo);
+
     /**
      * @brief Calulates cross numbers per pixel.
      * @param src MatrixBuffer<BYTE> to calculate

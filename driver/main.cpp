@@ -1,5 +1,3 @@
-// CmakeOpenclManualLink.cpp : 애플리케이션의 진입점을 정의합니다.
-//
 
 #include "main.hpp"
 
@@ -9,7 +7,8 @@ using namespace std;
 
 string readFile(string path) {
     ifstream ifs(path);
-    return string((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
+    return string((istreambuf_iterator<char>(ifs)),
+                  (istreambuf_iterator<char>()));
 }
 
 void run1() {
@@ -18,23 +17,21 @@ void run1() {
     FreeImage_Initialise(true);
 
     cout << "Running" << endl;
-    // load image
-
-    Img img(pathPrefix + "fingerprint.BMP");
-    cout << "Loaded Image" << endl;
 
     // init opencl
     OclInfo oclInfo = OclInfo::initOpenCL();
     cout << "Opencl initialized" << endl;
 
-    // Load kernel
-    string transformSource = readFile(pathPrefix + "transform.cl");
-    string staticsSoure = readFile(pathPrefix + "statics.cl");
-    cout << "kernel file loadded" << endl;
+    // init kernels
+    ImgTransform imgTransformer(oclInfo);
+    ImgStatics imgStatics(oclInfo);
+    MinutiaeDetector detector(oclInfo);
 
-    ImgTransform imgTransformer(oclInfo, transformSource);
-    ImgStatics imgStatics(oclInfo, staticsSoure);
-    MinutiaeDetector detector(oclInfo, transformSource);
+    cout << "kernel loaded" << endl;
+
+    // load image
+    Img img(pathPrefix + "fingerprint.BMP");
+    cout << "Loaded Image" << endl;
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
@@ -44,18 +41,12 @@ void run1() {
     buffer1.createBuffer(oclInfo.ctx);
     buffer2.createBuffer(oclInfo.ctx);
 
-    cl::Image2D climg(
-        oclInfo.ctx,
-        CL_MEM_READ_WRITE,
-        imgFormat,
-        img.width,
-        img.height,
-        0,
-        0);
+    cl::Image2D climg(oclInfo.ctx, CL_MEM_READ_WRITE, imgFormat, img.width,
+                      img.height, 0, 0);
 
-    err = oclInfo.queue.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
-    if (err)
-        throw OclException("Error while enqueue image", err);
+    err = oclInfo.queue.enqueueWriteImage(
+        climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
+    if (err) throw OclException("Error while enqueue image", err);
 
     imgTransformer.toGrayScale(climg, buffer1);
     buffer1.toHost(oclInfo);
@@ -89,7 +80,7 @@ void run1() {
     resultGaussian.saveImage(pathPrefix + "resultGaussian.png");
 
     // dynamic thresholding
-    imgTransformer.applyDynamicThresholding(buffer1, buffer2, 3,1.05);
+    imgTransformer.applyDynamicThresholding(buffer1, buffer2, 3, 1.05);
 
     buffer2.toHost(oclInfo);
     Img resultThreshold(buffer2);
@@ -105,7 +96,6 @@ void run1() {
     // cross number
     detector.applyCrossNumber(buffer1, buffer2);
     buffer2.toHost(oclInfo);
-    
 
     cout << buffer2.getLen() << endl;
     for (int i = 0; i < buffer2.getLen(); ++i) {
@@ -113,7 +103,7 @@ void run1() {
         if (val != 0) {
             cout << "Found type " << (int)val << " at " << i << "\n";
         }
-        buffer2.getData()[i] = val*40; // for visualize
+        buffer2.getData()[i] = val * 40;  // for visualize
     }
 
     Img resultCrossNum(buffer2);
@@ -128,23 +118,21 @@ void run2() {
     FreeImage_Initialise(true);
 
     cout << "Running" << endl;
-    // load image
-
-    Img img(pathPrefix + "fingerprint.BMP");
-    cout << "Loaded Image" << endl;
 
     // init opencl
     OclInfo oclInfo = OclInfo::initOpenCL();
     cout << "Opencl initialized" << endl;
 
     // Load kernel
-    string transformSource = readFile(pathPrefix + "transform.cl");
-    string staticsSoure = readFile(pathPrefix + "statics.cl");
-    cout << "kernel file loadded" << endl;
+    ImgTransform imgTransformer(oclInfo);
+    ImgStatics imgStatics(oclInfo);
+    MinutiaeDetector detector(oclInfo);
+    cout << "kernel loadded" << endl;
 
-    ImgTransform imgTransformer(oclInfo, transformSource);
-    ImgStatics imgStatics(oclInfo, staticsSoure);
-    MinutiaeDetector detector(oclInfo, transformSource);
+    // load image
+
+    Img img(pathPrefix + "fingerprint.BMP");
+    cout << "Loaded Image" << endl;
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
@@ -154,18 +142,12 @@ void run2() {
     buffer1.createBuffer(oclInfo.ctx);
     buffer2.createBuffer(oclInfo.ctx);
 
-    cl::Image2D climg(
-        oclInfo.ctx,
-        CL_MEM_READ_WRITE,
-        imgFormat,
-        img.width,
-        img.height,
-        0,
-        0);
+    cl::Image2D climg(oclInfo.ctx, CL_MEM_READ_WRITE, imgFormat, img.width,
+                      img.height, 0, 0);
 
-    err = oclInfo.queue.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
-    if (err)
-        throw OclException("Error while enqueue image", err);
+    err = oclInfo.queue.enqueueWriteImage(
+        climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
+    if (err) throw OclException("Error while enqueue image", err);
 
     imgTransformer.toGrayScale(climg, buffer1);
     buffer1.toHost(oclInfo);
@@ -233,6 +215,6 @@ int main(int argc, char **argv) {
     cout << argv[0] << endl;
 
     run1();
-    //run2();
+    // run2();
     return 0;
 }

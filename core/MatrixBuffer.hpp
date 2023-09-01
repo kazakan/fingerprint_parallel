@@ -1,9 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include "CL/opencl.hpp"
 #include "OclException.hpp"
 #include "OclInfo.hpp"
-#include <memory>
 
 /**
  * @brief Class represents Matrix. May contains related Opencl Buffer object.
@@ -11,14 +12,14 @@
  */
 template <typename T>
 class MatrixBuffer {
-  private:
+   private:
     T *_data = nullptr;
     unsigned int _width;
     unsigned int _height;
     unsigned int _len;
     cl::Buffer *_buffer = nullptr;
 
-  public:
+   public:
     /**
      * @brief Create MatruxBuffer with width, and height.
      * @param width width of image. Number of pixels in row.
@@ -26,28 +27,29 @@ class MatrixBuffer {
      */
     MatrixBuffer(int width, int height)
         : _width(width), _height(height), _len(width * height) {
-
         _data = new T[_len];
     };
 
     ~MatrixBuffer() {
         delete[] _data;
         _data = nullptr;
-        if (_buffer != nullptr)
-            delete _buffer;
+        if (_buffer != nullptr) delete _buffer;
     }
 
     /**
      * @brief Initialize OpenCL Buffer for matrix.
      * @param ctx cl::Context object
-     * @param memFlag flag used for OpenCL memory access policy. Default = CL_MEM_READ_WRITE
+     * @param memFlag flag used for OpenCL memory access policy. Default =
+     * CL_MEM_READ_WRITE
      */
-    void createBuffer(cl::Context ctx, cl_mem_flags memFlag = CL_MEM_READ_WRITE) {
+    void createBuffer(cl::Context ctx,
+                      cl_mem_flags memFlag = CL_MEM_READ_WRITE) {
         cl_int err = CL_SUCCESS;
         _buffer = new cl::Buffer(ctx, memFlag, _len * sizeof(T), nullptr, &err);
 
         if (err != CL_SUCCESS) {
-            throw OclException("Error while creating OCL buffer in MatrixBuffer.", err);
+            throw OclException(
+                "Error while creating OCL buffer in MatrixBuffer.", err);
         }
     }
 
@@ -73,9 +75,7 @@ class MatrixBuffer {
      * @brief  Get pointer that points first element of matrix.
      * @return Pointer to first element.
      */
-    T *getData() {
-        return _data;
-    }
+    T *getData() { return _data; }
 
     /**
      * @brief Get Related OpenCL Buffer.
@@ -89,9 +89,10 @@ class MatrixBuffer {
      * @param blocking if false, only enqueue job and continue. Default=true.
      */
     void toGpu(OclInfo &oclInfo, bool blocking = true) {
-        cl_int err = oclInfo.queue.enqueueWriteBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), (void*) getData(), nullptr, nullptr);
-        if (err)
-            throw OclException("Error enqueueWriteBuffer", err);
+        cl_int err = oclInfo.queue.enqueueWriteBuffer(
+            *getClBuffer(), blocking, 0, getLen() * sizeof(T),
+            (void *)getData(), nullptr, nullptr);
+        if (err) throw OclException("Error enqueueWriteBuffer", err);
     }
 
     /**
@@ -100,9 +101,10 @@ class MatrixBuffer {
      * @param blocking if false, only enqueue job and continue. Default=true.
      */
     void toHost(OclInfo &oclInfo, bool blocking = true) {
-        cl_int err = oclInfo.queue.enqueueReadBuffer(*getClBuffer(), blocking, 0, getLen() * sizeof(T), (void*) getData(), nullptr, nullptr);
-        if (err)
-            throw OclException("Error enqueueReadBuffer", err);
+        cl_int err = oclInfo.queue.enqueueReadBuffer(
+            *getClBuffer(), blocking, 0, getLen() * sizeof(T),
+            (void *)getData(), nullptr, nullptr);
+        if (err) throw OclException("Error enqueueReadBuffer", err);
     }
 
     /**
@@ -110,8 +112,9 @@ class MatrixBuffer {
      * @param oclInfo OclInfo contains valid queue.
      * @param dst destination to be copied.
      */
-    void copyBuffer(OclInfo& oclInfo,MatrixBuffer& dst){
-        cl_int err = oclInfo.queue.enqueueCopyBuffer(*getClBuffer(),*dst.getClBuffer(),0,0,getLen()*sizeof(T));
-        if(err) throw OclException("Error enqueueCopyBuffer",err);
+    void copyBuffer(OclInfo &oclInfo, MatrixBuffer &dst) {
+        cl_int err = oclInfo.queue.enqueueCopyBuffer(
+            *getClBuffer(), *dst.getClBuffer(), 0, 0, getLen() * sizeof(T));
+        if (err) throw OclException("Error enqueueCopyBuffer", err);
     }
 };
