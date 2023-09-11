@@ -69,6 +69,16 @@ class ImgTransform {
                    float V0, float M, float V);
 
     /**
+     * @brief Binarize image. If pixel > threshold then 255
+     * else 0;
+     * @param src Original image.
+     * @param dst Where result be saved.
+     * @param threshold Threshol value.
+     */
+    void binarize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,
+                  int threshold = 125);
+
+    /**
      * @brief Dynamic thresholding method. If pixel > avg(block pixels) then 255
      * else 0;
      * @param src Original image.

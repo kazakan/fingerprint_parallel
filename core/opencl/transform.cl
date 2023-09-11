@@ -11,13 +11,14 @@ void write_pixel(__global uchar *img, char val, int2 loc, int2 size) {
     }
 }
 
-
 /**
  * @brief get 2d image, return flattened image have one gray channel.
  *
  */
-__kernel void gray(__read_only image2d_t src, __global uchar *dst, int width, int height) {
-    sampler_t _sampler = CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
+__kernel void gray(__read_only image2d_t src, __global uchar *dst, int width,
+                   int height) {
+    sampler_t _sampler =
+        CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
 
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
@@ -31,8 +32,10 @@ __kernel void gray(__read_only image2d_t src, __global uchar *dst, int width, in
 }
 
 // normalize
-__kernel void normalize(__global uchar *src, __global uchar *dst, float M, float V, float M0, float V0, int width, int height) {
-    sampler_t _sampler = CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
+__kernel void normalize(__global uchar *src, __global uchar *dst, float M,
+                        float V, float M0, float V0, int width, int height) {
+    sampler_t _sampler =
+        CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
 
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
@@ -53,8 +56,8 @@ __kernel void normalize(__global uchar *src, __global uchar *dst, float M, float
 }
 
 // negate
-__kernel void negate(__global uchar *src, __global uchar *dst, int width, int height) {
-
+__kernel void negate(__global uchar *src, __global uchar *dst, int width,
+                     int height) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
     uchar pixel = read_pixel(src, loc, size);
@@ -64,9 +67,22 @@ __kernel void negate(__global uchar *src, __global uchar *dst, int width, int he
     write_pixel(dst, pixel, loc, size);
 }
 
+// binarize
+__kernel void binarize(__global uchar *src, __global uchar *dst, int width,
+                       int height, int threshold) {
+    int2 loc = (int2)(get_global_id(0), get_global_id(1));
+    int2 size = (int2)(width, height);
+    uchar pixel = read_pixel(src, loc, size);
+
+    pixel = pixel > threshold ? 255 : 0;
+
+    write_pixel(dst, pixel, loc, size);
+}
 
 // dynamicThreshold
-__kernel void dynamicThreshold(__global uchar *src, __global uchar *dst, int width, int height, int blockSize,float scale) {
+__kernel void dynamicThreshold(__global uchar *src, __global uchar *dst,
+                               int width, int height, int blockSize,
+                               float scale) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
@@ -82,14 +98,15 @@ __kernel void dynamicThreshold(__global uchar *src, __global uchar *dst, int wid
     }
 
     float mean = sum / ((2 * halfBlockSize + 1) * (2 * halfBlockSize + 1));
-    mean*=scale;
+    mean *= scale;
     pixel = pixel > mean ? 255 : 0;
 
     write_pixel(dst, pixel, loc, size);
 }
 
 // gaussian
-__kernel void gaussian(__global uchar *src, __global uchar *dst, int width, int height) {
+__kernel void gaussian(__global uchar *src, __global uchar *dst, int width,
+                       int height) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
@@ -114,7 +131,8 @@ __kernel void gaussian(__global uchar *src, __global uchar *dst, int width, int 
 }
 
 // sobelX
-__kernel void sobelX(__global uchar *src, __global uchar *dst, int width, int height) {
+__kernel void sobelX(__global uchar *src, __global uchar *dst, int width,
+                     int height) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
@@ -137,7 +155,8 @@ __kernel void sobelX(__global uchar *src, __global uchar *dst, int width, int he
 }
 
 // sobelY
-__kernel void sobelY(__global uchar *src, __global uchar *dst, int width, int height) {
+__kernel void sobelY(__global uchar *src, __global uchar *dst, int width,
+                     int height) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
@@ -160,15 +179,11 @@ __kernel void sobelY(__global uchar *src, __global uchar *dst, int width, int he
 }
 
 // Rosenfield Thinning Four connectivity One iteration
-__kernel void rosenfieldThinFourCon(
-    __global uchar *src,
-    __global uchar *dst,
-    int width,
-    int height,
-    int dir, // N,E,S,W = 0,1,2,3
-    __global uchar *globalContinueFlags,
-    __local uchar *localContinueFlags) {
-
+__kernel void rosenfieldThinFourCon(__global uchar *src, __global uchar *dst,
+                                    int width, int height,
+                                    int dir,  // N,E,S,W = 0,1,2,3
+                                    __global uchar *globalContinueFlags,
+                                    __local uchar *localContinueFlags) {
     const int2 loc = (int2)(get_global_id(0), get_global_id(1));
     const int2 size = (int2)(width, height);
     const int2 localLoc = (int2)(get_local_id(0), get_local_id(1));
@@ -185,50 +200,63 @@ __kernel void rosenfieldThinFourCon(
     if (pixel > 0) {
         // neighbors (N,NE,E,SE,S,SW,W,NW)
         uchar neighbors = 0;
-        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
-        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
 
         // number of 4 connected neighbors
-        uchar n4Neighbors = (neighbors & 0x80 ? 1 : 0) + (neighbors & 0x20 ? 1 : 0) + (neighbors & 0x08 ? 1 : 0) + (neighbors & 0x02 ? 1 : 0);
+        uchar n4Neighbors =
+            (neighbors & 0x80 ? 1 : 0) + (neighbors & 0x20 ? 1 : 0) +
+            (neighbors & 0x08 ? 1 : 0) + (neighbors & 0x02 ? 1 : 0);
 
         switch (dir) {
-        case 0: // N
-            if (n4Neighbors == 2) {
-                changed = (neighbors == 0b00111000) || (neighbors == 0b00001110);
-            } else if (n4Neighbors == 3) {
-                changed = (neighbors == 0b00111110);
-            }
-            break;
+            case 0:  // N
+                if (n4Neighbors == 2) {
+                    changed =
+                        (neighbors == 0b00111000) || (neighbors == 0b00001110);
+                } else if (n4Neighbors == 3) {
+                    changed = (neighbors == 0b00111110);
+                }
+                break;
 
-        case 1: // E
-            if (n4Neighbors == 2) {
-                changed = (neighbors == 0b10000011) || (neighbors == 0b00001110);
-            } else if (n4Neighbors == 3) {
-                changed = (neighbors == 0b10001111);
-            }
-            break;
+            case 1:  // E
+                if (n4Neighbors == 2) {
+                    changed =
+                        (neighbors == 0b10000011) || (neighbors == 0b00001110);
+                } else if (n4Neighbors == 3) {
+                    changed = (neighbors == 0b10001111);
+                }
+                break;
 
-        case 2: // S
-            if (n4Neighbors == 2) {
-                changed = (neighbors == 0b10000011);
-            } else if (n4Neighbors == 3) {
-                changed = (neighbors == 0b11100011);
-            }
-            break;
+            case 2:  // S
+                if (n4Neighbors == 2) {
+                    changed = (neighbors == 0b10000011);
+                } else if (n4Neighbors == 3) {
+                    changed = (neighbors == 0b11100011);
+                }
+                break;
 
-        case 3: // W
-            if (n4Neighbors == 2) {
-                changed = (neighbors == 0b11100000) || (neighbors == 0b00111000);
-            } else if (n4Neighbors == 3) {
-                changed = (neighbors == 0b11111000);
-            }
-            break;
+            case 3:  // W
+                if (n4Neighbors == 2) {
+                    changed =
+                        (neighbors == 0b11100000) || (neighbors == 0b00111000);
+                } else if (n4Neighbors == 3) {
+                    changed = (neighbors == 0b11111000);
+                }
+                break;
         }
 
         // if meet condition then change, else don't change
@@ -244,27 +272,24 @@ __kernel void rosenfieldThinFourCon(
 
     for (int stride = N >> 1; stride > 0; stride >>= 1) {
         if (localIdx < stride) {
-            localContinueFlags[localIdx] |= localContinueFlags[localIdx + stride];
+            localContinueFlags[localIdx] |=
+                localContinueFlags[localIdx + stride];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
     // write whether pixel changed in work group
     if (localIdx == 0) {
-        globalContinueFlags[groupId.x + groupId.y * numGroups.x] = localContinueFlags[0];
+        globalContinueFlags[groupId.x + groupId.y * numGroups.x] =
+            localContinueFlags[0];
     }
 }
 
 // Rosenfield Thinning Eight connectivity One iteration
-__kernel void rosenfieldThinEightCon(
-    __global uchar *src,
-    __global uchar *dst,
-    int width,
-    int height,
-    int dir,
-    __global uchar *globalContinueFlags,
-    __local uchar *localContinueFlags) {
-
+__kernel void rosenfieldThinEightCon(__global uchar *src, __global uchar *dst,
+                                     int width, int height, int dir,
+                                     __global uchar *globalContinueFlags,
+                                     __local uchar *localContinueFlags) {
     const int2 loc = (int2)(get_global_id(0), get_global_id(1));
     const int2 size = (int2)(width, height);
     const int2 localLoc = (int2)(get_local_id(0), get_local_id(1));
@@ -281,14 +306,22 @@ __kernel void rosenfieldThinEightCon(
     if (pixel > 0) {
         // neighbors (N,NE,E,SE,S,SW,W,NW)
         uchar neighbors = 0;
-        neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
-        neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
-        neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
-        neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
 
         // number of 8 connected neighbors
         uchar neighborsBits = neighbors;
@@ -298,18 +331,18 @@ __kernel void rosenfieldThinEightCon(
 
         uchar borderFlag = 0;
         switch (dir) {
-        case 0: // N
-            borderFlag = 0b10000000;
-            break;
-        case 1: // E
-            borderFlag = 0b00100000;
-            break;
-        case 2: // S
-            borderFlag = 0b00001000;
-            break;
-        case 3: // W
-            borderFlag = 0b00000010;
-            break;
+            case 0:  // N
+                borderFlag = 0b10000000;
+                break;
+            case 1:  // E
+                borderFlag = 0b00100000;
+                break;
+            case 2:  // S
+                borderFlag = 0b00001000;
+                break;
+            case 3:  // W
+                borderFlag = 0b00000010;
+                break;
         }
 
         if ((neighbors & borderFlag) == 0) {
@@ -339,47 +372,56 @@ __kernel void rosenfieldThinEightCon(
 
     for (int stride = N >> 1; stride > 0; stride >>= 1) {
         if (localIdx < stride) {
-            localContinueFlags[localIdx] |= localContinueFlags[localIdx + stride];
+            localContinueFlags[localIdx] |=
+                localContinueFlags[localIdx + stride];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
     // write whether pixel changed in work group
     if (localIdx == 0) {
-        globalContinueFlags[groupId.x + groupId.y * numGroups.x] = localContinueFlags[0];
+        globalContinueFlags[groupId.x + groupId.y * numGroups.x] =
+            localContinueFlags[0];
     }
 }
 
 // crossNumbers
-__kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width, int height) {
+__kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width,
+                           int height) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
-    uchar pixel = read_pixel(src, loc , size);
-    if(pixel!=0){
+    uchar pixel = read_pixel(src, loc, size);
+    if (pixel != 0) {
         // neighbors (N,NE,E,SE,S,SW,W,NW)
-    uchar neighbors = 0;
-    neighbors |= (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
-    neighbors |= (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
-    neighbors |= (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
-    neighbors |= (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
-    neighbors |= (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
-    neighbors |= (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
-    neighbors |= (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
-    neighbors |= (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
+        uchar neighbors = 0;
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(0, -1), size) ? 1 : 0) << 7));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, -1), size) ? 1 : 0) << 6));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, 0), size) ? 1 : 0) << 5));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(1, 1), size) ? 1 : 0) << 4));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(0, 1), size) ? 1 : 0) << 3));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, 1), size) ? 1 : 0) << 2));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, 0), size) ? 1 : 0) << 1));
+        neighbors |=
+            (((read_pixel(src, loc + (int2)(-1, -1), size) ? 1 : 0) << 0));
 
-    uchar rotated = (neighbors >> 1) | ((neighbors & 1) << 7);
-    uchar crossed = (rotated ^ neighbors);
+        uchar rotated = (neighbors >> 1) | ((neighbors & 1) << 7);
+        uchar crossed = (rotated ^ neighbors);
 
-    char count = 0;
-    for (count = 0; crossed; count++)
-        crossed &= crossed - 1;
+        char count = 0;
+        for (count = 0; crossed; count++) crossed &= crossed - 1;
 
-    count >>= 1;
+        count >>= 1;
 
-    write_pixel(dst, count, loc, size);
-    }else{
+        write_pixel(dst, count, loc, size);
+    } else {
         write_pixel(dst, 0, loc, size);
     }
-    
 }

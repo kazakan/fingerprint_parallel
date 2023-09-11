@@ -4,6 +4,7 @@
 .code/
 build/
 
+*.jpg
 *.png
 *.BMP
 *.tiff

@@ -30,7 +30,7 @@ void run1() {
     cout << "kernel loaded" << endl;
 
     // load image
-    Img img(pathPrefix + "fingerprint.BMP");
+    Img img(pathPrefix + "fingerprint.jpg");
     cout << "Loaded Image" << endl;
 
     // create opencl Image
@@ -80,33 +80,39 @@ void run1() {
     resultGaussian.saveImage(pathPrefix + "resultGaussian.png");
 
     // dynamic thresholding
-    imgTransformer.applyDynamicThresholding(buffer1, buffer2, 3, 1.05);
+    // imgTransformer.applyDynamicThresholding(buffer1, buffer2, 3, 1.05);
 
-    buffer2.toHost(oclInfo);
-    Img resultThreshold(buffer2);
+    // negate
+    imgTransformer.negate(buffer1, buffer2);
+
+    // binarize
+    imgTransformer.binarize(buffer2, buffer1);
+
+    buffer1.toHost(oclInfo);
+    Img resultThreshold(buffer1);
     resultThreshold.saveImage(pathPrefix + "resultThreshold.png");
 
     // thinning
-    imgTransformer.applyThinning8(buffer2, buffer1);
+    imgTransformer.applyThinning8(buffer1, buffer2);
 
-    buffer1.toHost(oclInfo);
-    Img resultThinning(buffer1);
+    buffer2.toHost(oclInfo);
+    Img resultThinning(buffer2);
     resultThinning.saveImage(pathPrefix + "resultThinning.png");
 
     // cross number
-    detector.applyCrossNumber(buffer1, buffer2);
-    buffer2.toHost(oclInfo);
+    detector.applyCrossNumber(buffer2, buffer1);
+    buffer1.toHost(oclInfo);
 
-    cout << buffer2.getLen() << endl;
-    for (int i = 0; i < buffer2.getLen(); ++i) {
-        BYTE val = buffer2.getData()[i];
+    cout << buffer1.getLen() << endl;
+    for (int i = 0; i < buffer1.getLen(); ++i) {
+        BYTE val = buffer1.getData()[i];
         if (val != 0) {
             cout << "Found type " << (int)val << " at " << i << "\n";
         }
-        buffer2.getData()[i] = val * 40;  // for visualize
+        buffer1.getData()[i] = val * 40;  // for visualize
     }
 
-    Img resultCrossNum(buffer2);
+    Img resultCrossNum(buffer1);
     resultCrossNum.saveImage(pathPrefix + "resultCrossNum.png");
 
     FreeImage_DeInitialise();
