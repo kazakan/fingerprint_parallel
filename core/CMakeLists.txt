@@ -30,6 +30,6 @@ target_include_directories(FingerprintParallelCore PUBLIC "${CMAKE_CURRENT_BINAR
 find_package(OpenCL REQUIRED)
 target_link_libraries(FingerprintParallelCore OpenCL::OpenCL)
 
-find_library(FreeImage PUBLIC_HEADER)
-target_link_libraries(FingerprintParallelCore FreeImage)
+find_library(freeimage PUBLIC_HEADER)
+target_link_libraries(FingerprintParallelCore freeimage)
 
