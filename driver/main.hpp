@@ -18,3 +18,4 @@ extern "C" {
 #include "MinutiaeDetector.hpp"
 #include "OclException.hpp"
 #include "OclInfo.hpp"
+#include "logger.hpp"

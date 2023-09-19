@@ -16,22 +16,22 @@ void run1() {
     cl_int err = 0;
     FreeImage_Initialise(true);
 
-    cout << "Running" << endl;
+    LOG("Running");
 
     // init opencl
     OclInfo oclInfo = OclInfo::initOpenCL();
-    cout << "Opencl initialized" << endl;
+    DLOG("Opencl initialized");
 
     // init kernels
     ImgTransform imgTransformer(oclInfo);
     ImgStatics imgStatics(oclInfo);
     MinutiaeDetector detector(oclInfo);
 
-    cout << "kernel loaded" << endl;
+    LOG("kernel loaded");
 
     // load image
     Img img(pathPrefix + "fingerprint.jpg");
-    cout << "Loaded Image" << endl;
+    LOG("Loaded Image");
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
@@ -123,22 +123,22 @@ void run2() {
     cl_int err = 0;
     FreeImage_Initialise(true);
 
-    cout << "Running" << endl;
+    LOG("Running");
 
     // init opencl
     OclInfo oclInfo = OclInfo::initOpenCL();
-    cout << "Opencl initialized" << endl;
+    LOG("Opencl initialized");
 
     // Load kernel
     ImgTransform imgTransformer(oclInfo);
     ImgStatics imgStatics(oclInfo);
     MinutiaeDetector detector(oclInfo);
-    cout << "kernel loadded" << endl;
+    LOG("kernel loadded");
 
     // load image
 
     Img img(pathPrefix + "fingerprint.BMP");
-    cout << "Loaded Image" << endl;
+    LOG("Loaded Image");
 
     // create opencl Image
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
