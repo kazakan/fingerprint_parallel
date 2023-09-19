@@ -21,6 +21,6 @@
 #define DLOG(format, arg...)                           \
     do {                                               \
         std::string debug_fmt = "[func %s, line %d] "; \
-        std::string fmt = debug_fmt + format;    \
-        LOG(fmt, __func__, __LINE__, ##arg);     \
+        std::string fmt = debug_fmt + format;          \
+        LOG(fmt, __func__, __LINE__, ##arg);           \
     } while (0);
