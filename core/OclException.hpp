@@ -147,16 +147,10 @@ class OclException : public std::exception {
                 return "CL_INVALID_LINKER_OPTIONS";  //-67
             case CL_INVALID_DEVICE_PARTITION_COUNT:
                 return "CL_INVALID_DEVICE_PARTITION_COUNT";  //-68
-                                                             //    case
-                                                             //    CL_INVALID_PIPE_SIZE:
-                                                             //    return
-                                                             //    "CL_INVALID_PIPE_SIZE";
-                                                             //    //-69 case
-                                                             //    CL_INVALID_DEVICE_QUEUE:
-                                                             //    return
-                                                             //    "CL_INVALID_DEVICE_QUEUE";
-                                                             //    //-70
-
+            case CL_INVALID_PIPE_SIZE:
+                return "CL_INVALID_PIPE_SIZE";  //-69
+            case CL_INVALID_DEVICE_QUEUE:
+                return "CL_INVALID_DEVICE_QUEUE";  //-70
             default:
                 return "UNKNOWN ERROR CODE";
         }
