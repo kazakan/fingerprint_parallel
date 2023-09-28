@@ -425,3 +425,12 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width,
         write_pixel(dst, 0, loc, size);
     }
 }
+
+// copy
+__kernel void copy(__global uchar *src, __global uchar *dst, int len) {
+    int loc = get_global_id(0);
+
+    if (loc < len) {
+        dst[loc] = src[loc];
+    }
+}
