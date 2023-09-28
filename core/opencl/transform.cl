@@ -426,6 +426,19 @@ __kernel void crossNumbers(__global uchar *src, __global uchar *dst, int width,
     }
 }
 
+// removeFalseMinutiaes
+__kernel void removeFalseMinutiae(__global uchar *src, __global uchar *dst,
+                                  int len) {
+    // currently only removes points with cn=2
+    int loc = get_global_id(0);
+
+    if (loc < len) {
+        if (src[loc] == 2) {
+            dst[loc] = 0;
+        }
+    }
+}
+
 // copy
 __kernel void copy(__global uchar *src, __global uchar *dst, int len) {
     int loc = get_global_id(0);
