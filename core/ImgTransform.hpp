@@ -111,4 +111,11 @@ class ImgTransform {
      * @param dst Where result be saved.
      */
     void applyGaussianFilter(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst);
+
+    /**
+     * @brief Copy image to dst from src.
+     * @param src Original image.
+     * @param dst Where result be saved.
+     */
+    void copy(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst);
 };

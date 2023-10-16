@@ -20,4 +20,11 @@ class MinutiaeDetector {
      * @param dst MatrixBuffer that Result be saved.
      */
     void applyCrossNumber(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst);
+
+    /**
+     * @brief Calulates cross numbers per pixel.
+     * @param src MatrixBuffer<BYTE> after applyCrossNumber
+     * @param dst MatrixBuffer that Result be saved.
+     */
+    void removeFalseMinutiae(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst);
 };
