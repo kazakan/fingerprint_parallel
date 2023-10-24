@@ -35,6 +35,14 @@ class MatrixBuffer {
 
     /**
      * @brief Create MatruxBuffer with width, and height.
+     * @param data initial data
+     */
+    MatrixBuffer(std::vector<T> data)
+        : MatrixBuffer<T>(1,data.size(),data) {
+    };
+
+    /**
+     * @brief Create MatruxBuffer with width, and height.
      * @param width width of image. Number of pixels in row.
      * @param height height of image. Number of pixels in column.
      * @param data initial data
@@ -43,7 +51,8 @@ class MatrixBuffer {
         : _width(width), _height(height), _len(width * height) {
         _data = new T[_len];
 
-        const unsigned long long limit = std::min(_len, static_cast<unsigned long long>(data.size()));
+        const unsigned long long limit =
+            std::min(_len, static_cast<unsigned long long>(data.size()));
         for (int i = 0; i < limit; ++i) {
             _data[i] = data[i];
         }
