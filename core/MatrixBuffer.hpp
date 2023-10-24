@@ -43,7 +43,8 @@ class MatrixBuffer {
         : _width(width), _height(height), _len(width * height) {
         _data = new T[_len];
 
-        for (int i = 0; i < std::min(_len, data.size()); ++i) {
+        const unsigned long long limit = std::min(_len, static_cast<unsigned long long>(data.size()));
+        for (int i = 0; i < limit; ++i) {
             _data[i] = data[i];
         }
     };
