@@ -49,3 +49,4 @@ TEST(ImageTransformTest, Copy) {
 
     EXPECT_EQ(bufferCopied, bufferOriginal);
 }
+

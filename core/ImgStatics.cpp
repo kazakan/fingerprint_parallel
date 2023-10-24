@@ -36,10 +36,10 @@ float ImgStatics::sum(MatrixBuffer<BYTE> &src) {
 
     tmp.toHost(oclInfo);
 
-    float result = 0;
+    int result = 0;
     float *data = tmp.getData();
     for (int i = 0; i < n_groups; ++i) {
-        result += data[i];
+        result += (data[i] + 0.5);
     }
 
     return result;

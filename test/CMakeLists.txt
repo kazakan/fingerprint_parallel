@@ -12,6 +12,8 @@ enable_testing()
 add_executable(
   unit_test
   kernel_test.cpp
+  img_statics_test.cpp
+  random_case_generator.hpp
 )
 
 target_link_libraries(
