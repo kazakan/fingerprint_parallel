@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include "ImgTransform.hpp"
 #include "OclInfo.hpp"
 
@@ -7,36 +9,43 @@ TEST(ImageTransformTest, Negate) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgTransform imgTransformer(oclInfo);
 
-    MatrixBuffer<BYTE> buffer1(1, 5, {1, 50, 126, 200, 255});
-    MatrixBuffer<BYTE> buffer2(1, 5);
+    vector<BYTE> vOriginal(256);  // 0,1,2, ... ,255
+    vector<BYTE> vExpected(256);  // 255,254, ... , 0
 
-    MatrixBuffer<BYTE> expected(
-        1, 5, {255 - 1, 255 - 50, 255 - 126, 255 - 200, 255 - 255});
+    for (int i = 0; i < 256; ++i) {
+        vOriginal[i] = i;
+        vExpected[i] = 255 - i;
+    }
 
-    buffer1.createBuffer(oclInfo.ctx);
-    buffer2.createBuffer(oclInfo.ctx);
+    MatrixBuffer<BYTE> bufferOrininal(1, vOriginal.size(), vOriginal);
+    MatrixBuffer<BYTE> bufferNegated(1, 256);
 
-    buffer1.toGpu(oclInfo);
+    MatrixBuffer<BYTE> bufferExpected(1, vOriginal.size(), vExpected);
 
-    imgTransformer.negate(buffer1, buffer2);
-    buffer2.toHost(oclInfo);
+    bufferOrininal.createBuffer(oclInfo.ctx);
+    bufferNegated.createBuffer(oclInfo.ctx);
+    bufferOrininal.toGpu(oclInfo);
 
-    EXPECT_EQ(buffer2, expected);
+    imgTransformer.negate(bufferOrininal, bufferNegated);
+    bufferNegated.toHost(oclInfo);
+
+    EXPECT_EQ(bufferNegated, bufferExpected);
 }
 
 TEST(ImageTransformTest, Copy) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgTransform imgTransformer(oclInfo);
 
-    MatrixBuffer<BYTE> buffer1(1, 5, {1, 50, 126, 200, 255});
-    MatrixBuffer<BYTE> buffer2(1, 5);
-    buffer1.createBuffer(oclInfo.ctx);
-    buffer2.createBuffer(oclInfo.ctx);
+    MatrixBuffer<BYTE> bufferOriginal(1, 5, {1, 50, 126, 200, 255});
+    MatrixBuffer<BYTE> bufferCopied(1, 5);
 
-    buffer1.toGpu(oclInfo);
+    bufferOriginal.createBuffer(oclInfo.ctx);
+    bufferCopied.createBuffer(oclInfo.ctx);
 
-    imgTransformer.copy(buffer1, buffer2);
-    buffer2.toHost(oclInfo);
+    bufferOriginal.toGpu(oclInfo);
 
-    EXPECT_EQ(buffer2, buffer1);
+    imgTransformer.copy(bufferOriginal, bufferCopied);
+    bufferCopied.toHost(oclInfo);
+
+    EXPECT_EQ(bufferCopied, bufferOriginal);
 }
