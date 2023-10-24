@@ -1,6 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
+#include <stdexcept>
+#include <vector>
 
 #include "CL/opencl.hpp"
 #include "OclException.hpp"
@@ -16,7 +19,7 @@ class MatrixBuffer {
     T *_data = nullptr;
     unsigned int _width;
     unsigned int _height;
-    unsigned int _len;
+    unsigned long long _len;
     cl::Buffer *_buffer = nullptr;
 
    public:
@@ -30,10 +33,35 @@ class MatrixBuffer {
         _data = new T[_len];
     };
 
+    /**
+     * @brief Create MatruxBuffer with width, and height.
+     * @param width width of image. Number of pixels in row.
+     * @param height height of image. Number of pixels in column.
+     * @param data initial data
+     */
+    MatrixBuffer(int width, int height, std::vector<T> data)
+        : _width(width), _height(height), _len(width * height) {
+        _data = new T[_len];
+
+        for (int i = 0; i < std::min(_len, data.size()); ++i) {
+            _data[i] = data[i];
+        }
+    };
+
     ~MatrixBuffer() {
         delete[] _data;
         _data = nullptr;
         if (_buffer != nullptr) delete _buffer;
+    }
+
+    bool operator==(const MatrixBuffer<T> &rhs) const {
+        if (_width != rhs._width || _height != rhs._height || _len != rhs._len)
+            return false;
+
+        for (int i = 0; i < _len; ++i) {
+            if (_data[i] != rhs._data[i]) return false;
+        }
+        return true;
     }
 
     /**
