@@ -178,24 +178,26 @@ TEST(ImageTransformTest, Normalize) {
         const int NR = std::get<1>(inputData);
         const vector<BYTE>& arr = std::get<2>(inputData);
 
-        const float mean0 = meanDis(gen);
-        const float var0 = varDis(gen);
-        float mean, var, tmp;
+        const float mean0 = static_cast<float>(meanDis(gen));
+        const float var0 = static_cast<float>(varDis(gen));
+        long long sum = 0;
+        long long squareSum = 0;
+        const int N = arr.size();
 
-        tmp = 0;
         for (int value : arr) {
-            mean += value;
-            tmp += value * value;
+            sum += value;
+            squareSum += value * value;
         }
 
-        mean /= arr.size();
-        var = tmp / arr.size() - mean * mean;
+        double mean = static_cast<double>(sum) / N;
+        double var = static_cast<double>(squareSum) / N - mean * mean;
 
         vector<BYTE> result(arr.size());
 
         for (int i = 0; i < arr.size(); ++i) {
-            float delta = sqrtf(var0 * (arr[i] - mean) * (arr[i] - mean) / var);
-            int val = arr[i] > mean ? mean0 + delta : mean0 - delta;
+            float pixel = static_cast<float>(arr[i]);
+            float delta = abs(pixel - mean) * sqrtf(var0 / var);
+            int val = pixel > mean ? mean0 + delta : mean0 - delta;
             result[i] = clamp(val, 0, 255);
         }
 
@@ -222,7 +224,16 @@ TEST(ImageTransformTest, Normalize) {
 
         bufferResult.toHost(oclInfo);
 
-        ASSERT_EQ(bufferResult, bufferExpected);       
+        cout << "m0" << std::get<0>(data) << "v0" << std::get<1>(data) << "v"
+             << mean << "v" << var << endl;
+        for (int v : std::get<4>(data)) cout << v << " ";
+        cout << endl;
+        for (int v : std::get<5>(data)) cout << v << " ";
+        cout << endl;
+        for (int i = 0; i < std::get<4>(data).size(); ++i)
+            cout << (int)bufferResult.getData()[i] << " ";
+        cout << endl << endl;
+        EXPECT_EQ(bufferResult, bufferExpected);
     };
 
     for (auto& data : datasets) {
