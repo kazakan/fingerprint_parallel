@@ -27,7 +27,14 @@ TEST(ImageTransformTest, GrayScale) {
          {119, 64,  92,  35,  231, 56,  38,  101, 69,   // [R G B R G B R G B]
           229, 210, 2,   249, 59,  32,  175, 254, 107,  //
           85,  173, 184, 231, 236, 255, 96,  166, 14},
-         {105, 77, 53, 209, 193, 186, 110, 233, 104}}};
+         {105, 77, 53, 209, 193, 186, 110, 233, 104}},
+        {3,
+         3,
+         {0,   49,  34,  48,  25,  246, 57,  75,  166,  // [R G B R G B R G B]
+          141, 179, 10,  55,  17,  250, 141, 118, 173,  //
+          202, 39,  232, 216, 138, 33,  217, 197, 244},
+         {12, 57, 68, 139, 60, 138, 169, 186, 214}},
+    };
 
     // create random data
     RandomMatrixGenerator generator;
@@ -106,19 +113,59 @@ TEST(ImageTransformTest, Negate) {
         vExpected[i] = 255 - i;
     }
 
-    MatrixBuffer<BYTE> bufferOrininal(vOriginal);
-    MatrixBuffer<BYTE> bufferNegated(1, 256);
+    // 0: width, 1: height, 2: original data, 3: expected result
+    using negate_datatype = std::tuple<int, int, vector<BYTE>, vector<BYTE>>;
 
-    MatrixBuffer<BYTE> bufferExpected(vExpected);
+    vector<negate_datatype> datasets{{1, 256, vOriginal, vExpected},
+                                     {3,
+                                      3,
+                                      {0, 127, 255, 1, 128, 254, 2, 129, 253},
+                                      {255, 128, 0, 254, 127, 1, 253, 126, 2}},
+                                     {1, 1, {0}, {255}},
+                                     {1, 1, {255}, {0}}};
 
-    bufferOrininal.createBuffer(oclInfo.ctx);
-    bufferNegated.createBuffer(oclInfo.ctx);
-    bufferOrininal.toGpu(oclInfo);
+    // create random data
+    RandomMatrixGenerator generator;
 
-    imgTransformer.negate(bufferOrininal, bufferNegated);
-    bufferNegated.toHost(oclInfo);
+    const int nRandomCases = 100;
+    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
+        tuple<int, int, vector<BYTE>> inputData =
+            generator.generateMatData(0, 255);
 
-    EXPECT_EQ(bufferNegated, bufferExpected);
+        const vector<BYTE>& arr = std::get<2>(inputData);
+        const int N = arr.size();
+
+        vector<BYTE> expected(N);
+
+        for (int i = 0; i < arr.size(); ++i) {
+            expected[i] = 255 - arr[i];
+        }
+
+        datasets.push_back(
+            {std::get<0>(inputData), std::get<1>(inputData), arr, expected});
+    }
+
+    auto test_one_pair = [&](negate_datatype& data) {
+        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
+                                          std::get<2>(data));
+        MatrixBuffer<BYTE> bufferResult(std::get<0>(data), std::get<1>(data));
+        MatrixBuffer<BYTE> bufferExpected(std::get<0>(data), std::get<1>(data),
+                                          std::get<3>(data));
+
+        bufferOriginal.createBuffer(oclInfo.ctx);
+        bufferResult.createBuffer(oclInfo.ctx);
+        bufferOriginal.toGpu(oclInfo);
+
+        imgTransformer.negate(bufferOriginal, bufferResult);
+
+        bufferResult.toHost(oclInfo);
+
+        ASSERT_EQ(bufferResult, bufferExpected);
+    };
+
+    for (auto& data : datasets) {
+        test_one_pair(data);
+    }
 }
 
 TEST(ImageTransformTest, Copy) {
@@ -159,8 +206,9 @@ TEST(ImageTransformTest, Normalize) {
          2000,
          3,
          3,
-         {237, 163, 52, 65, 129, 218, 62, 148, 212},
-         {190, 141, 67, 76, 118, 177, 74, 131, 173}}};
+         {74, 38, 195, 187, 41, 68, 86, 117, 114},
+         {104, 74, 204, 198, 77, 99, 114, 140, 137}},
+    };
 
     // create random data
     RandomMatrixGenerator generator;
@@ -169,7 +217,7 @@ TEST(ImageTransformTest, Normalize) {
     std::uniform_int_distribution<int> meanDis(0, 255);
     std::uniform_int_distribution<int> varDis(0, 5000);
 
-    const int nRandomCases = 3;
+    const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
         tuple<int, int, vector<BYTE>> inputData =
             generator.generateMatData(0, 255, 5, 5);
@@ -233,7 +281,7 @@ TEST(ImageTransformTest, Normalize) {
         for (int i = 0; i < std::get<4>(data).size(); ++i)
             cout << (int)bufferResult.getData()[i] << " ";
         cout << endl << endl;
-        EXPECT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(bufferResult, bufferExpected);
     };
 
     for (auto& data : datasets) {
@@ -251,20 +299,45 @@ TEST(ImageTransformTest, DynamicThresholding) {
         std::tuple<int, float, int, int, vector<BYTE>, vector<BYTE>>;
 
     vector<dynamic_thresholding_datatype> datasets{
-        {3,
-         1.05,
-         7,
-         5,
-         {0, 0,   0,   0,   0,   0,   0,  //
-          0, 100, 100, 100, 100, 100, 0,  //
-          0, 100, 100, 100, 100, 100, 0,  //
-          0, 100, 100, 100, 100, 100, 0,  //
-          0, 0,   0,   0,   0,   0,   0},
-         {0, 0,   0,   0,   0,   0,   0,  //
-          0, 255, 255, 255, 255, 255, 0,  //
-          0, 255, 0,   0,   0,   255, 0,  //
-          0, 255, 255, 255, 255, 255, 0,  //
-          0, 0,   0,   0,   0,   0,   0}}};
+        {
+            3,
+            1.05,
+            7,
+            5,
+            {0, 0,   0,   0,   0,   0,   0,  //
+             0, 100, 100, 100, 100, 100, 0,  //
+             0, 100, 100, 100, 100, 100, 0,  //
+             0, 100, 100, 100, 100, 100, 0,  //
+             0, 0,   0,   0,   0,   0,   0},
+            {0, 0,   0,   0,   0,   0,   0,  //
+             0, 255, 255, 255, 255, 255, 0,  //
+             0, 255, 0,   0,   0,   255, 0,  //
+             0, 255, 255, 255, 255, 255, 0,  //
+             0, 0,   0,   0,   0,   0,   0}  //
+        },
+        {
+            5,
+            1.05,
+            9,
+            7,
+            {
+                0, 0, 0,   0,   0,   0,   0,   0, 0,  //
+                0, 0, 0,   0,   0,   0,   0,   0, 0,  //
+                0, 0, 100, 100, 100, 100, 100, 0, 0,  //
+                0, 0, 100, 100, 100, 100, 100, 0, 0,  //
+                0, 0, 100, 100, 100, 100, 100, 0, 0,  //
+                0, 0, 0,   0,   0,   0,   0,   0, 0,  //
+                0, 0, 0,   0,   0,   0,   0,   0, 0,
+            },
+            {0, 0, 0,   0,   0,   0,   0,   0, 0,  //
+             0, 0, 0,   0,   0,   0,   0,   0, 0,  //
+             0, 0, 255, 255, 255, 255, 255, 0, 0,  //
+             0, 0, 255, 255, 255, 255, 255, 0, 0,  //
+             0, 0, 255, 255, 255, 255, 255, 0, 0,  //
+             0, 0, 0,   0,   0,   0,   0,   0, 0,  //
+             0, 0, 0,   0,   0,   0,   0,   0, 0}  //
+        },
+    };
 
     // create random data
     RandomMatrixGenerator generator;
@@ -273,10 +346,10 @@ TEST(ImageTransformTest, DynamicThresholding) {
     std::uniform_int_distribution<int> halfBlockSizeDis(1, 3);
     std::uniform_real_distribution<float> scaleDis(0.8, 1.2);
 
-    const int nRandomCases = 3;
+    const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
         tuple<int, int, vector<BYTE>> inputData =
-            generator.generateMatData(0, 255, 5, 5);
+            generator.generateMatData(0, 255);
 
         const int NC = std::get<0>(inputData);
         const int NR = std::get<1>(inputData);
@@ -354,18 +427,32 @@ TEST(ImageTransformTest, ApplyGaussian) {
     //  0: width, 1: height, 2: original data, 3: expected result
     using gaussian_datatype = std::tuple<int, int, vector<BYTE>, vector<BYTE>>;
 
-    vector<gaussian_datatype> datasets{{5,
-                                        5,
-                                        {0, 0, 0,   0, 0,  //
-                                         0, 0, 0,   0, 0,  //
-                                         0, 0, 100, 0, 0,  //
-                                         0, 0, 0,   0, 0,  //
-                                         0, 0, 0,   0, 0},
-                                        {0, 0,  0,  0,  0,  //
-                                         0, 6,  13, 6,  0,  //
-                                         0, 13, 25, 13, 0,  //
-                                         0, 6,  13, 6,  0,  //
-                                         0, 0,  0,  0,  0}}};
+    vector<gaussian_datatype> datasets{
+        {5,
+         5,
+         {0, 0, 0,   0, 0,  //
+          0, 0, 0,   0, 0,  //
+          0, 0, 100, 0, 0,  //
+          0, 0, 0,   0, 0,  //
+          0, 0, 0,   0, 0},
+         {0, 0,  0,  0,  0,  //
+          0, 6,  13, 6,  0,  //
+          0, 13, 25, 13, 0,  //
+          0, 6,  13, 6,  0,  //
+          0, 0,  0,  0,  0}},
+        {5,
+         5,
+         {0,   0,   100, 0,   0,    //
+          0,   0,   100, 0,   0,    //
+          100, 100, 100, 100, 100,  //
+          0,   0,   100, 0,   0,    //
+          0,   0,   100, 0,   0},
+         {0,  19, 38, 19, 0,   //
+          19, 44, 63, 44, 19,  //
+          38, 63, 75, 63, 38,  //
+          19, 44, 63, 44, 19,  //
+          0,  19, 38, 19, 0}},
+    };
 
     // create random data
     RandomMatrixGenerator generator;
