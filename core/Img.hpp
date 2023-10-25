@@ -18,6 +18,8 @@ class Img {
     unsigned char *data;
     string path;
 
+    enum ReadMode { GRAY, RGB };
+
     Img(string path) : path(path) {
         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(path.c_str(), 0);
         FIBITMAP *image = FreeImage_Load(format, path.c_str(), PNG_DEFAULT);
@@ -37,19 +39,35 @@ class Img {
         FreeImage_Unload(image);
     }
 
-    Img(MatrixBuffer<BYTE> &matrixBuffer) {
-        width = matrixBuffer.getWidth();
-        height = matrixBuffer.getHeight();
-        size = matrixBuffer.getLen() * 4;
+    Img(MatrixBuffer<BYTE> &matrixBuffer, ReadMode readMode = GRAY) {
+        if (readMode == GRAY) {
+            width = matrixBuffer.getWidth();
+            height = matrixBuffer.getHeight();
+            size = matrixBuffer.getLen() * 4;
 
-        unsigned char *matDat = matrixBuffer.getData();
+            unsigned char *matDat = matrixBuffer.getData();
 
-        data = new unsigned char[size];
-        for (int i = 0; i < size / 4; ++i) {
-            data[i * 4] = matDat[i];
-            data[i * 4 + 1] = matDat[i];
-            data[i * 4 + 2] = matDat[i];
-            data[i * 4 + 3] = 255;
+            data = new unsigned char[size];
+            for (int i = 0; i < size / 4; ++i) {
+                data[i * 4] = matDat[i];
+                data[i * 4 + 1] = matDat[i];
+                data[i * 4 + 2] = matDat[i];
+                data[i * 4 + 3] = 255;
+            }
+        } else if (readMode == RGB) {
+            width = matrixBuffer.getWidth() / 3;
+            height = matrixBuffer.getHeight();
+            size = width * height * 4;
+
+            unsigned char *matDat = matrixBuffer.getData();
+
+            data = new unsigned char[size];
+            for (int i = 0; i < size / 4; ++i) {
+                data[i * 4] = matDat[i * 3];
+                data[i * 4 + 1] = matDat[i * 3 + 1];
+                data[i * 4 + 2] = matDat[i * 3 + 2];
+                data[i * 4 + 3] = 255;
+            }
         }
     }
 
