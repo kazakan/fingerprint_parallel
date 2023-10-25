@@ -5,7 +5,7 @@ uint read_pixel(__global uchar *img, int2 loc, int2 size) {
     return 0;
 }
 
-void write_pixel(__global uchar *img, char val, int2 loc, int2 size) {
+void write_pixel(__global uchar *img, uchar val, int2 loc, int2 size) {
     if (all(loc >= 0) && all(loc < size)) {
         img[loc.x + loc.y * size.x] = val;
     }
@@ -23,12 +23,13 @@ __kernel void gray(__read_only image2d_t src, __global uchar *dst, int width,
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
-    float4 pixel = convert_float4(read_imageui(src, _sampler, loc)) / 255.0f;
+    float4 pixel = convert_float4(read_imageui(src, _sampler, loc));
     pixel.xyz = pixel.x * 0.72f + pixel.y * 0.21f + pixel.z * 0.07f;
-    pixel.z = 1.0f;
-    pixel *= 255;
 
-    write_pixel(dst, pixel.x, loc, size);
+    int ret = pixel.x;
+    if(ret > 255) ret = 255;
+
+    write_pixel(dst, ret, loc, size);
 }
 
 // normalize

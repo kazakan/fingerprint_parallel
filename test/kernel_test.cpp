@@ -12,6 +12,88 @@
 
 #define BYTE uint8_t
 
+TEST(ImageTransformTest, GrayScale) {
+    OclInfo oclInfo = OclInfo::initOpenCL();
+    ImgTransform imgTransformer(oclInfo);
+    ImgStatics imgStatics(oclInfo);
+
+    //  0: width, 1: height, 2: original data (shape.xy=(3*width,height)),
+    // 3: expected result
+    using grayscale_datatype = std::tuple<int, int, vector<BYTE>, vector<BYTE>>;
+
+    vector<grayscale_datatype> datasets{
+        {3,
+         3,
+         {119, 64,  92,  35,  231, 56,  38,  101, 69,   // [R G B R G B R G B]
+          229, 210, 2,   249, 59,  32,  175, 254, 107,  //
+          85,  173, 184, 231, 236, 255, 96,  166, 14},
+         {105, 77, 53, 209, 193, 186, 110, 233, 104}}};
+
+    // create random data
+    RandomMatrixGenerator generator;
+
+    std::mt19937_64 gen(47);
+    std::uniform_int_distribution<int> widthDis(3, 30);
+
+    const int nRandomCases = 100;
+    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
+        const int width = widthDis(gen);
+        tuple<int, int, vector<BYTE>> inputData =
+            generator.generateMatData(0, 255, width * 3, 10);
+
+        const vector<BYTE>& arr = std::get<2>(inputData);
+        vector<BYTE> result(width * std::get<1>(inputData));
+
+        for (int i = 0; i < result.size(); ++i) {
+            int v = arr[3 * i + 0] * 0.72f + arr[3 * i + 1] * 0.21f +
+                    arr[3 * i + 2] * 0.07f;
+
+            result[i] = v;
+        }
+
+        datasets.push_back({width, std::get<1>(inputData), arr, result});
+    }
+
+    auto test_one_pair = [&](grayscale_datatype& data) {
+        cout << "L" << std::get<0>(data) << " " << std::get<1>(data) << " "
+             << std::get<2>(data).size() << endl;
+        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data) * 3,
+                                          std::get<1>(data), std::get<2>(data));
+        MatrixBuffer<BYTE> bufferResult(std::get<0>(data), std::get<1>(data));
+        MatrixBuffer<BYTE> bufferExpected(std::get<0>(data), std::get<1>(data),
+                                          std::get<3>(data));
+
+        Img img(bufferOriginal, Img::RGB);
+
+        cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
+        cl::Image2D climg(oclInfo.ctx, CL_MEM_READ_WRITE, imgFormat, img.width,
+                          img.height, 0, 0);
+        int err = oclInfo.queue.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0},
+                                                  {img.width, img.height, 1}, 0,
+                                                  0, img.data);
+        if (err) throw OclException("Error while enqueue image", err);
+
+        bufferOriginal.createBuffer(oclInfo.ctx);
+        bufferResult.createBuffer(oclInfo.ctx);
+        bufferOriginal.toGpu(oclInfo);
+
+        imgTransformer.toGrayScale(climg, bufferResult);
+
+        bufferResult.toHost(oclInfo);
+
+        for (int i = 0; i < std::get<2>(data).size(); ++i) {
+            const int v1 = bufferResult.getData()[i];
+            const int v2 = bufferResult.getData()[i];
+            const int diff = v1 - v2;
+            ASSERT_TRUE(diff < 2 && diff > -2);
+        }
+    };
+
+    for (auto& data : datasets) {
+        test_one_pair(data);
+    }
+}
+
 TEST(ImageTransformTest, Negate) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgTransform imgTransformer(oclInfo);
