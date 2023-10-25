@@ -20,7 +20,7 @@ TEST(ImgStaticsTest, Sum) {
     int expected = std::accumulate(vData.begin(), vData.end(), 0);
     float result = imgStatics.sum(bufferOrininal);
 
-    EXPECT_EQ(result, expected);
+    ASSERT_EQ(result, expected);
 
     // Random generated test cases
     const int nCases = 100;
@@ -34,7 +34,7 @@ TEST(ImgStaticsTest, Sum) {
                                    original->getData() + original->getLen(), 0);
         result = imgStatics.sum(*original);
 
-        EXPECT_EQ(result, expected);
+        ASSERT_EQ(result, expected);
     }
 }
 
@@ -53,7 +53,7 @@ TEST(ImgStaticsTest, SquareSum) {
     }
     float result = imgStatics.squareSum(bufferOrininal);
 
-    EXPECT_EQ(result, expected);
+    ASSERT_EQ(result, expected);
 
     // Random generated test cases
     const int nCases = 100;
@@ -70,7 +70,7 @@ TEST(ImgStaticsTest, SquareSum) {
         }
         result = imgStatics.squareSum(*original);
 
-        EXPECT_EQ(result, expected);
+        ASSERT_EQ(result, expected);
     }
 }
 
@@ -88,7 +88,7 @@ TEST(ImgStaticsTest, Mean) {
         vData.size();
     float result = imgStatics.mean(bufferOrininal);
 
-    EXPECT_EQ(result, expected);
+    ASSERT_EQ(result, expected);
 
     // Random generated test cases
     const int nCases = 100;
@@ -104,7 +104,7 @@ TEST(ImgStaticsTest, Mean) {
                    original->getLen();
         result = imgStatics.mean(*original);
 
-        EXPECT_EQ(result, expected);
+        ASSERT_EQ(result, expected);
     }
 }
 
@@ -128,7 +128,7 @@ TEST(ImgStaticsTest, Var) {
     float expected = squareSum / vData.size() - mean * mean;
     float result = imgStatics.var(bufferOrininal);
 
-    EXPECT_EQ(result, expected);
+    ASSERT_EQ(result, expected);
 
     // Random generated test cases
     const int nCases = 100;
@@ -151,6 +151,6 @@ TEST(ImgStaticsTest, Var) {
         expected = squareSum / original->getLen() - mean * mean;
         result = imgStatics.var(*original);
 
-        EXPECT_EQ(result, expected);
+        ASSERT_EQ(result, expected);
     }
 }

@@ -136,7 +136,7 @@ TEST(ImageTransformTest, Copy) {
     imgTransformer.copy(bufferOriginal, bufferCopied);
     bufferCopied.toHost(oclInfo);
 
-    EXPECT_EQ(bufferCopied, bufferOriginal);
+    ASSERT_EQ(bufferCopied, bufferOriginal);
 }
 
 TEST(ImageTransformTest, Normalize) {
@@ -222,7 +222,7 @@ TEST(ImageTransformTest, Normalize) {
 
         bufferResult.toHost(oclInfo);
 
-        EXPECT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(bufferResult, bufferExpected);
     };
 
     for (auto& data : datasets) {
@@ -328,7 +328,7 @@ TEST(ImageTransformTest, DynamicThresholding) {
 
         bufferResult.toHost(oclInfo);
 
-        EXPECT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(bufferResult, bufferExpected);
     };
 
     for (auto& data : datasets) {
@@ -419,7 +419,7 @@ TEST(ImageTransformTest, ApplyGaussian) {
 
         bufferResult.toHost(oclInfo);
 
-        EXPECT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(bufferResult, bufferExpected);
     };
 
     for (auto& data : datasets) {

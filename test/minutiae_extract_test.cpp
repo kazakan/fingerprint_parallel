@@ -193,7 +193,7 @@ TEST(MinutiaeDetectTest, ApplyCrossNumber) {
 
         bufferResult.toHost(oclInfo);
 
-        EXPECT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(bufferResult, bufferExpected);
     };
 
     for (auto& data : datasets) {
