@@ -12,7 +12,7 @@ ImgStatics::ImgStatics(OclInfo oclInfo) {
     if (err) throw OclBuildException(err);
 }
 
-float ImgStatics::sum(MatrixBuffer<BYTE> &src) {
+long long ImgStatics::sum(MatrixBuffer<BYTE> &src) {
     cl::Kernel kernel(program, "sum");
 
     int N = src.getLen();
@@ -20,12 +20,12 @@ float ImgStatics::sum(MatrixBuffer<BYTE> &src) {
     int n_groups = (N + (group_size - 1)) / group_size;
     int global_work_size = group_size * n_groups;
 
-    MatrixBuffer<cl_float> tmp(n_groups, 1);
+    MatrixBuffer<cl_long> tmp(n_groups, 1);
     tmp.createBuffer(oclInfo.ctx);
 
     kernel.setArg(0, *src.getClBuffer());
     kernel.setArg(1, *tmp.getClBuffer());
-    kernel.setArg(2, group_size * sizeof(cl_float), NULL);
+    kernel.setArg(2, group_size * sizeof(cl_long), NULL);
     kernel.setArg(3, N);
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(
@@ -36,30 +36,30 @@ float ImgStatics::sum(MatrixBuffer<BYTE> &src) {
 
     tmp.toHost(oclInfo);
 
-    int result = 0;
-    float *data = tmp.getData();
+    long long result = 0;
+    long long *data = tmp.getData();
     for (int i = 0; i < n_groups; ++i) {
-        result += (data[i] + 0.5);
+        result += data[i];
     }
 
     return result;
 }
 
-float ImgStatics::mean(MatrixBuffer<BYTE> &src) {
+double ImgStatics::mean(MatrixBuffer<BYTE> &src) {
     const int N = src.getLen();
-    float result = sum(src) / N;
+    double result = static_cast<double>(sum(src)) / N;
     return result;
 }
 
-float ImgStatics::var(MatrixBuffer<BYTE> &src) {
+double ImgStatics::var(MatrixBuffer<BYTE> &src) {
     const int N = src.getLen();
-    float mean = sum(src) / N;
-    float elementSquareSum = squareSum(src);
-    float result = elementSquareSum / N - mean * mean;
+    double mean = static_cast<double>(sum(src)) / N;
+    long long elementSquareSum = squareSum(src);
+    double result = static_cast<double>(elementSquareSum) / N - mean * mean;
     return result;
 }
 
-float ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
+long long ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
     cl::Kernel kernel(program, "squareSum");
 
     int N = src.getLen();
@@ -67,12 +67,12 @@ float ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
     int n_groups = (N + (group_size - 1)) / group_size;
     int global_work_size = group_size * n_groups;
 
-    MatrixBuffer<float> tmp(n_groups, 1);
+    MatrixBuffer<cl_long> tmp(n_groups, 1);
     tmp.createBuffer(oclInfo.ctx);
 
     kernel.setArg(0, *src.getClBuffer());
     kernel.setArg(1, *tmp.getClBuffer());
-    kernel.setArg(2, group_size * sizeof(float), NULL);
+    kernel.setArg(2, group_size * sizeof(cl_long), NULL);
     kernel.setArg(3, N);
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(
@@ -83,8 +83,8 @@ float ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
 
     tmp.toHost(oclInfo);
 
-    float result = 0;
-    float *data = tmp.getData();
+    long long result = 0;
+    long long *data = tmp.getData();
     for (int i = 0; i < n_groups; ++i) {
         result += data[i];
     }

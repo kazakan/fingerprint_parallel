@@ -1,13 +1,17 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
+#include <ostream>
 #include <stdexcept>
 #include <vector>
 
 #include "CL/opencl.hpp"
 #include "OclException.hpp"
 #include "OclInfo.hpp"
+
+#define BYTE uint8_t
 
 /**
  * @brief Class represents Matrix. May contains related Opencl Buffer object.
@@ -37,9 +41,7 @@ class MatrixBuffer {
      * @brief Create MatruxBuffer with width, and height.
      * @param data initial data
      */
-    MatrixBuffer(std::vector<T> data)
-        : MatrixBuffer<T>(1,data.size(),data) {
-    };
+    MatrixBuffer(std::vector<T> data) : MatrixBuffer<T>(1, data.size(), data){};
 
     /**
      * @brief Create MatruxBuffer with width, and height.
@@ -95,19 +97,19 @@ class MatrixBuffer {
      * @brief Get width of matrix.
      * @return Width of matrix
      */
-    unsigned int getWidth() { return _width; }
+    const unsigned int getWidth() const { return _width; }
 
     /**
      * @brief Get height of matrix.
      * @return Height of matrix
      */
-    unsigned int getHeight() { return _height; }
+    const unsigned int getHeight() const { return _height; }
 
     /**
      * @brief Get numbers of elements in matrix. (width*height)
      * @return width*height
      */
-    unsigned int getLen() { return _len; }
+    const unsigned int getLen() const { return _len; }
 
     /**
      * @brief  Get pointer that points first element of matrix.

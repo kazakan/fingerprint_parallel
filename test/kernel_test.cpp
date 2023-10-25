@@ -222,7 +222,7 @@ TEST(ImageTransformTest, Normalize) {
 
         bufferResult.toHost(oclInfo);
 
-        ASSERT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(bufferResult, bufferExpected);       
     };
 
     for (auto& data : datasets) {

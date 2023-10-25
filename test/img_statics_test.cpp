@@ -18,7 +18,7 @@ TEST(ImgStaticsTest, Sum) {
     bufferOrininal.toGpu(oclInfo);
 
     int expected = std::accumulate(vData.begin(), vData.end(), 0);
-    float result = imgStatics.sum(bufferOrininal);
+    long long result = imgStatics.sum(bufferOrininal);
 
     ASSERT_EQ(result, expected);
 
@@ -47,11 +47,11 @@ TEST(ImgStaticsTest, SquareSum) {
     bufferOrininal.createBuffer(oclInfo.ctx);
     bufferOrininal.toGpu(oclInfo);
 
-    float expected = 0;
-    for (float v : vData) {
-        expected += v * v;
+    long long expected = 0;
+    for (long long v : vData) {
+        expected += (v * v);
     }
-    float result = imgStatics.squareSum(bufferOrininal);
+    long long result = imgStatics.squareSum(bufferOrininal);
 
     ASSERT_EQ(result, expected);
 
@@ -65,8 +65,8 @@ TEST(ImgStaticsTest, SquareSum) {
 
         expected = 0;
         for (int i = 0; i < original->getLen(); ++i) {
-            const float v = static_cast<float>(original->getData()[i]);
-            expected +=  v*v;
+            const long long v = static_cast<double>(original->getData()[i]);
+            expected += (v * v);
         }
         result = imgStatics.squareSum(*original);
 
@@ -83,10 +83,10 @@ TEST(ImgStaticsTest, Mean) {
     bufferOrininal.createBuffer(oclInfo.ctx);
     bufferOrininal.toGpu(oclInfo);
 
-    float expected =
-        static_cast<float>(std::accumulate(vData.begin(), vData.end(), 0)) /
+    double expected =
+        static_cast<double>(std::accumulate(vData.begin(), vData.end(), 0)) /
         vData.size();
-    float result = imgStatics.mean(bufferOrininal);
+    double result = imgStatics.mean(bufferOrininal);
 
     ASSERT_EQ(result, expected);
 
@@ -98,7 +98,7 @@ TEST(ImgStaticsTest, Mean) {
         original->createBuffer(oclInfo.ctx);
         original->toGpu(oclInfo);
 
-        expected = static_cast<float>(std::accumulate(
+        expected = static_cast<double>(std::accumulate(
                        original->getData(),
                        original->getData() + original->getLen(), 0)) /
                    original->getLen();
@@ -112,45 +112,52 @@ TEST(ImgStaticsTest, Var) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgStatics imgStatics(oclInfo);
 
-    vector<BYTE> vData{1, 4, 6, 8, 9};
-    MatrixBuffer<BYTE> bufferOrininal(1, vData.size(), vData);
-    bufferOrininal.createBuffer(oclInfo.ctx);
-    bufferOrininal.toGpu(oclInfo);
+    //  0: width, 1: height, 2: original data, 3: expected result
+    using var_datatype = std::tuple<int, int, vector<BYTE>, double>;
 
-    float mean =
-        static_cast<float>(std::accumulate(vData.begin(), vData.end(), 0)) /
-        vData.size();
-    float squareSum = 0;
-    for (int i = 0; i < vData.size(); ++i) {
-        squareSum += static_cast<float>(vData[i]) * vData[i];
-    }
+    vector<var_datatype> datasets;
 
-    float expected = squareSum / vData.size() - mean * mean;
-    float result = imgStatics.var(bufferOrininal);
+    // Create random data
+    RandomMatrixGenerator generator;
+    const int nRandomCases = 100;
+    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
+        tuple<int, int, vector<BYTE>> inputData =
+            generator.generateMatData(0, 255);
 
-    ASSERT_EQ(result, expected);
+        const vector<BYTE>& arr = std::get<2>(inputData);
 
-    // Random generated test cases
-    const int nCases = 100;
-    RandomMatrixGenerator matGen;
-    for (int currentCase = 0; currentCase < nCases; ++currentCase) {
-        unique_ptr<MatrixBuffer<BYTE>> original = matGen.generateMat(0, 255);
-        original->createBuffer(oclInfo.ctx);
-        original->toGpu(oclInfo);
+        long long sum = 0;
+        long long squareSum = 0;
+        const int N = arr.size();
 
-        mean = static_cast<float>(std::accumulate(
-                   original->getData(),
-                   original->getData() + original->getLen(), 0)) /
-               original->getLen();
-        squareSum = 0;
-        for (int i = 0; i < original->getLen(); ++i) {
-            squareSum += static_cast<float>(original->getData()[i]) *
-                         original->getData()[i];
+        for (int i = 0; i < N; ++i) {
+            long long v = arr[i];
+            sum += v;
+            squareSum += v * v;
         }
 
-        expected = squareSum / original->getLen() - mean * mean;
-        result = imgStatics.var(*original);
+        double mean = static_cast<double>(sum) / N;
+        double expected = static_cast<double>(squareSum) / N - mean * mean;
+
+        datasets.push_back(
+            {std::get<0>(inputData), std::get<1>(inputData), arr, expected});
+    }
+
+    auto test_one_pair = [&](var_datatype& data) {
+        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
+                                          std::get<2>(data));
+
+        double expected = std::get<3>(data);
+
+        bufferOriginal.createBuffer(oclInfo.ctx);
+        bufferOriginal.toGpu(oclInfo);
+
+        double result = imgStatics.var(bufferOriginal);
 
         ASSERT_EQ(result, expected);
+    };
+
+    for (auto& data : datasets) {
+        test_one_pair(data);
     }
 }
