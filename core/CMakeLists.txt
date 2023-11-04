@@ -13,8 +13,8 @@ add_custom_command(
     "-DOCL_KERNELS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/opencl"
     
     -P "${PROJECT_SOURCE_DIR}/cmake/OclToCpp.cmake"
-    DEPEND "${PROJECT_SOURCE_DIR}/cmake/OclToCpp.cmake" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/opencl"
+    DEPENDS "${PROJECT_SOURCE_DIR}/cmake/OclToCpp.cmake" 
+    ${OCL_FILES}
 )
 
 add_library(
