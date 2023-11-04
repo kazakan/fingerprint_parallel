@@ -12,12 +12,12 @@ ImgTransform::ImgTransform(OclInfo oclInfo) {
     if (err) throw OclBuildException(err);
 }
 
-void ImgTransform::toGrayScale(cl::Image2D &src, MatrixBuffer<BYTE> &dst) {
+void ImgTransform::toGrayScale(cl::Image2D &src, MatrixBuffer<uint8_t> &dst) {
     cl::Kernel kernel(program, "gray");
 
-    const size_t groupSize = 8;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 8;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -36,12 +36,13 @@ void ImgTransform::toGrayScale(cl::Image2D &src, MatrixBuffer<BYTE> &dst) {
     if (err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::negate(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+void ImgTransform::negate(MatrixBuffer<uint8_t> &src,
+                          MatrixBuffer<uint8_t> &dst) {
     cl::Kernel kernel(program, "negate");
 
-    const size_t groupSize = 8;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 8;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -60,13 +61,14 @@ void ImgTransform::negate(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
     if (err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,
-                             float M0, float V0, float M, float V) {
+void ImgTransform::normalize(MatrixBuffer<uint8_t> &src,
+                             MatrixBuffer<uint8_t> &dst, float M0, float V0,
+                             float M, float V) {
     cl::Kernel kernel(program, "normalize");
 
-    const size_t groupSize = 8;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 8;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -89,13 +91,13 @@ void ImgTransform::normalize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,
     if (err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::binarize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,
-                            int threshold) {
+void ImgTransform::binarize(MatrixBuffer<uint8_t> &src,
+                            MatrixBuffer<uint8_t> &dst, int threshold) {
     cl::Kernel kernel(program, "binarize");
 
-    const size_t groupSize = 8;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 8;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -112,20 +114,17 @@ void ImgTransform::binarize(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst,
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(
         kernel, cl::NullRange, global_work_size, local_work_size);
 
-    if (err) {
-        cout << "ERR " << __FILE__ << " " << __LINE__ << endl;
-        throw OclKernelEnqueueError(err);
-    }
+    if (err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src,
-                                            MatrixBuffer<BYTE> &dst,
+void ImgTransform::applyDynamicThresholding(MatrixBuffer<uint8_t> &src,
+                                            MatrixBuffer<uint8_t> &dst,
                                             int blockSize, float scale) {
     cl::Kernel kernel(program, "dynamicThreshold");
 
-    const size_t groupSize = 8;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 8;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -146,13 +145,13 @@ void ImgTransform::applyDynamicThresholding(MatrixBuffer<BYTE> &src,
     if (err) throw OclKernelEnqueueError(err);
 }
 
-bool ImgTransform::thinningOneIter(MatrixBuffer<BYTE> &src,
-                                   MatrixBuffer<BYTE> &dst, int dir = 0) {
+bool ImgTransform::thinningOneIter(MatrixBuffer<uint8_t> &src,
+                                   MatrixBuffer<uint8_t> &dst, int dir = 0) {
     cl::Kernel kernel(program, "rosenfieldThinFourCon");
 
-    const size_t groupSize = 16;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 16;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -160,7 +159,7 @@ bool ImgTransform::thinningOneIter(MatrixBuffer<BYTE> &src,
     cl::NDRange global_work_size(groupSize * n_groups.get()[0],
                                  groupSize * n_groups.get()[1]);
 
-    MatrixBuffer<BYTE> globalFlag(n_groups.get()[0], n_groups.get()[1]);
+    MatrixBuffer<uint8_t> globalFlag(n_groups.get()[0], n_groups.get()[1]);
     globalFlag.createBuffer(oclInfo.ctx);
 
     kernel.setArg(0, *src.getClBuffer());
@@ -169,7 +168,7 @@ bool ImgTransform::thinningOneIter(MatrixBuffer<BYTE> &src,
     kernel.setArg(3, dst.getHeight());
     kernel.setArg(4, dir);
     kernel.setArg(5, *globalFlag.getClBuffer());  // ContinueFlags
-    kernel.setArg(6, sizeof(BYTE) * groupSize * groupSize,
+    kernel.setArg(6, sizeof(uint8_t) * groupSize * groupSize,
                   nullptr);  // localContinueFlags
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(
@@ -187,13 +186,13 @@ bool ImgTransform::thinningOneIter(MatrixBuffer<BYTE> &src,
     return !flag;
 }
 
-bool ImgTransform::thinning8OneIter(MatrixBuffer<BYTE> &src,
-                                    MatrixBuffer<BYTE> &dst, int dir = 0) {
+bool ImgTransform::thinning8OneIter(MatrixBuffer<uint8_t> &src,
+                                    MatrixBuffer<uint8_t> &dst, int dir = 0) {
     cl::Kernel kernel(program, "rosenfieldThinEightCon");
 
-    const size_t groupSize = 16;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 16;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -201,7 +200,7 @@ bool ImgTransform::thinning8OneIter(MatrixBuffer<BYTE> &src,
     cl::NDRange global_work_size(groupSize * n_groups.get()[0],
                                  groupSize * n_groups.get()[1]);
 
-    MatrixBuffer<BYTE> globalFlag(n_groups.get()[0], n_groups.get()[1]);
+    MatrixBuffer<uint8_t> globalFlag(n_groups.get()[0], n_groups.get()[1]);
     globalFlag.createBuffer(oclInfo.ctx);
 
     kernel.setArg(0, *src.getClBuffer());
@@ -210,7 +209,7 @@ bool ImgTransform::thinning8OneIter(MatrixBuffer<BYTE> &src,
     kernel.setArg(3, dst.getHeight());
     kernel.setArg(4, dir);
     kernel.setArg(5, *globalFlag.getClBuffer());  // ContinueFlags
-    kernel.setArg(6, sizeof(BYTE) * groupSize * groupSize,
+    kernel.setArg(6, sizeof(uint8_t) * groupSize * groupSize,
                   nullptr);  // localContinueFlags
 
     cl_int err = oclInfo.queue.enqueueNDRangeKernel(
@@ -228,10 +227,10 @@ bool ImgTransform::thinning8OneIter(MatrixBuffer<BYTE> &src,
     return !flag;
 }
 
-void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src,
-                                 MatrixBuffer<BYTE> &dst) {
-    MatrixBuffer<BYTE> input(src.getWidth(), src.getHeight());
-    MatrixBuffer<BYTE> output(dst.getWidth(), dst.getHeight());
+void ImgTransform::applyThinning(MatrixBuffer<uint8_t> &src,
+                                 MatrixBuffer<uint8_t> &dst) {
+    MatrixBuffer<uint8_t> input(src.getWidth(), src.getHeight());
+    MatrixBuffer<uint8_t> output(dst.getWidth(), dst.getHeight());
     input.createBuffer(oclInfo.ctx);
     output.createBuffer(oclInfo.ctx);
 
@@ -260,10 +259,10 @@ void ImgTransform::applyThinning(MatrixBuffer<BYTE> &src,
     output.copyBuffer(oclInfo, dst);
 }
 
-void ImgTransform::applyThinning8(MatrixBuffer<BYTE> &src,
-                                  MatrixBuffer<BYTE> &dst) {
-    MatrixBuffer<BYTE> input(src.getWidth(), src.getHeight());
-    MatrixBuffer<BYTE> output(dst.getWidth(), dst.getHeight());
+void ImgTransform::applyThinning8(MatrixBuffer<uint8_t> &src,
+                                  MatrixBuffer<uint8_t> &dst) {
+    MatrixBuffer<uint8_t> input(src.getWidth(), src.getHeight());
+    MatrixBuffer<uint8_t> output(dst.getWidth(), dst.getHeight());
     input.createBuffer(oclInfo.ctx);
     output.createBuffer(oclInfo.ctx);
 
@@ -290,13 +289,13 @@ void ImgTransform::applyThinning8(MatrixBuffer<BYTE> &src,
     output.copyBuffer(oclInfo, dst);
 }
 
-void ImgTransform::applyGaussianFilter(MatrixBuffer<BYTE> &src,
-                                       MatrixBuffer<BYTE> &dst) {
+void ImgTransform::applyGaussianFilter(MatrixBuffer<uint8_t> &src,
+                                       MatrixBuffer<uint8_t> &dst) {
     cl::Kernel kernel(program, "gaussian");
 
-    const size_t groupSize = 8;
-    const int W = dst.getWidth();
-    const int H = dst.getHeight();
+    const std::size_t groupSize = 8;
+    const std::size_t W = dst.getWidth();
+    const std::size_t H = dst.getHeight();
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((W + (groupSize - 1)) / groupSize,
@@ -315,11 +314,12 @@ void ImgTransform::applyGaussianFilter(MatrixBuffer<BYTE> &src,
     if (err) throw OclKernelEnqueueError(err);
 }
 
-void ImgTransform::copy(MatrixBuffer<BYTE> &src, MatrixBuffer<BYTE> &dst) {
+void ImgTransform::copy(MatrixBuffer<uint8_t> &src,
+                        MatrixBuffer<uint8_t> &dst) {
     cl::Kernel kernel(program, "copy");
 
-    const size_t groupSize = 512;
-    const int len = min(src.getLen(), dst.getLen());
+    const std::size_t groupSize = 512;
+    const std::size_t len = std::min(src.getLen(), dst.getLen());
 
     cl::NDRange local_work_size(groupSize, groupSize);
     cl::NDRange n_groups((len + (groupSize - 1)) / groupSize);

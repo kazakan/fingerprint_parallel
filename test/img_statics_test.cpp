@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include "ImgStatics.hpp"
 #include "OclInfo.hpp"
@@ -13,9 +14,9 @@ TEST(ImgStaticsTest, Sum) {
     ImgStatics imgStatics(oclInfo);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using sum_datatype = std::tuple<int, int, vector<BYTE>, int>;
+    using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, int>;
 
-    vector<sum_datatype> datasets{
+    std::vector<sum_datatype> datasets{
         {3, 3, {1, 2, 3, 4, 5, 6, 7, 8, 9}, 45},
         {3, 3, {255, 255, 255, 255, 255, 255, 255, 255, 255}, 2295},
         {3, 3, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0},
@@ -26,10 +27,10 @@ TEST(ImgStaticsTest, Sum) {
     RandomMatrixGenerator generator;
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255);
 
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
         const int N = arr.size();
 
         long long sum = 0;
@@ -43,8 +44,8 @@ TEST(ImgStaticsTest, Sum) {
     }
 
     auto test_one_pair = [&](sum_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
-                                          std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
         double expected = std::get<3>(data);
 
         bufferOriginal.createBuffer(oclInfo.ctx);
@@ -65,9 +66,9 @@ TEST(ImgStaticsTest, SqaureSum) {
     ImgStatics imgStatics(oclInfo);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using sum_datatype = std::tuple<int, int, vector<BYTE>, long long>;
+    using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, long long>;
 
-    vector<sum_datatype> datasets{
+    std::vector<sum_datatype> datasets{
         {3, 3, {1, 2, 3, 4, 5, 6, 7, 8, 9}, 285},
     };
 
@@ -75,10 +76,10 @@ TEST(ImgStaticsTest, SqaureSum) {
     RandomMatrixGenerator generator;
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255);
 
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
         const int N = arr.size();
 
         long long sum = 0;
@@ -92,8 +93,8 @@ TEST(ImgStaticsTest, SqaureSum) {
     }
 
     auto test_one_pair = [&](sum_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
-                                          std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
         double expected = std::get<3>(data);
 
         bufferOriginal.createBuffer(oclInfo.ctx);
@@ -114,9 +115,9 @@ TEST(ImgStaticsTest, Mean) {
     ImgStatics imgStatics(oclInfo);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using sum_datatype = std::tuple<int, int, vector<BYTE>, float>;
+    using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, float>;
 
-    vector<sum_datatype> datasets{
+    std::vector<sum_datatype> datasets{
         {3, 3, {1, 2, 3, 4, 5, 6, 7, 8, 9}, 5},
         {3, 3, {255, 255, 255, 255, 255, 255, 255, 255, 255}, 255},
         {3, 3, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0},
@@ -127,10 +128,10 @@ TEST(ImgStaticsTest, Mean) {
     RandomMatrixGenerator generator;
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255);
 
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
         const int N = arr.size();
 
         long long sum = 0;
@@ -146,8 +147,8 @@ TEST(ImgStaticsTest, Mean) {
     }
 
     auto test_one_pair = [&](sum_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
-                                          std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
         double expected = std::get<3>(data);
 
         bufferOriginal.createBuffer(oclInfo.ctx);
@@ -168,9 +169,9 @@ TEST(ImgStaticsTest, Var) {
     ImgStatics imgStatics(oclInfo);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using var_datatype = std::tuple<int, int, vector<BYTE>, double>;
+    using var_datatype = std::tuple<int, int, std::vector<uint8_t>, double>;
 
-    vector<var_datatype> datasets{
+    std::vector<var_datatype> datasets{
         {3, 3, {76, 49, 136, 167, 143, 160, 75, 220, 71}, 2884.98765432},
         {3, 3, {102, 174, 55, 135, 45, 115, 40, 216, 40}, 3620.24691358024}};
 
@@ -178,10 +179,10 @@ TEST(ImgStaticsTest, Var) {
     RandomMatrixGenerator generator;
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255);
 
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
 
         long long sum = 0;
         long long squareSum = 0;
@@ -201,8 +202,8 @@ TEST(ImgStaticsTest, Var) {
     }
 
     auto test_one_pair = [&](var_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
-                                          std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
 
         double expected = std::get<3>(data);
 

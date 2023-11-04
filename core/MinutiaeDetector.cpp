@@ -12,8 +12,8 @@ MinutiaeDetector::MinutiaeDetector(OclInfo oclInfo) {
     if (err) throw OclBuildException(err);
 }
 
-void MinutiaeDetector::applyCrossNumber(MatrixBuffer<BYTE> &src,
-                                        MatrixBuffer<BYTE> &dst) {
+void MinutiaeDetector::applyCrossNumber(MatrixBuffer<uint8_t> &src,
+                                        MatrixBuffer<uint8_t> &dst) {
     cl::Kernel kernel(program, "crossNumbers");
 
     const size_t groupSize = 8;
@@ -37,13 +37,13 @@ void MinutiaeDetector::applyCrossNumber(MatrixBuffer<BYTE> &src,
     if (err) throw OclKernelEnqueueError(err);
 }
 
-void MinutiaeDetector::removeFalseMinutiae(MatrixBuffer<BYTE> &src,
-                                           MatrixBuffer<BYTE> &dst) {
+void MinutiaeDetector::removeFalseMinutiae(MatrixBuffer<uint8_t> &src,
+                                           MatrixBuffer<uint8_t> &dst) {
     // currently only removes points with cn=2
     cl::Kernel kernel(program, "removeFalseMinutiae");
 
     const size_t groupSize = 512;
-    const cl_int len = min(src.getLen(), dst.getLen());
+    const cl_int len = std::min(src.getLen(), dst.getLen());
 
     cl::NDRange local_work_size(groupSize);
     cl::NDRange n_groups((len + (groupSize - 1)) / groupSize);

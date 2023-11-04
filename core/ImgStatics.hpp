@@ -4,7 +4,7 @@
 #include "MatrixBuffer.hpp"
 
 /**
- * @brief Class calculates some mathmetical statics from MatrixBuffer<BYTE>
+ * @brief Class calculates some mathmetical statics from MatrixBuffer<uint8_t>
  *
  */
 class ImgStatics {
@@ -20,35 +20,35 @@ class ImgStatics {
      *        This copies result from gpu because needs of aggregation
      *        across work groups.
      *
-     * @param src MatrixBuffer<BYTE> to calculate
+     * @param src MatrixBuffer<uint8_t> to calculate
      * @return sum of elements
      */
-    long long sum(MatrixBuffer<BYTE> &src);
+    std::int64_t sum(MatrixBuffer<uint8_t> &src);
 
     /**
      * @brief Get average of elements in buffer.
      *        This copies result from gpu because needs of aggregation
      *        across work groups.
-     * @param src MatrixBuffer<BYTE> to calculate
+     * @param src MatrixBuffer<uint8_t> to calculate
      * @return Average of elements
      */
-    double mean(MatrixBuffer<BYTE> &src);
+    double mean(MatrixBuffer<uint8_t> &src);
 
     /**
      * @brief Get variance of elements in buffer.
      *        This copies result from gpu because needs of aggregation
      *        across work groups.
-     * @param src MatrixBuffer<BYTE> to calculate
+     * @param src MatrixBuffer<uint8_t> to calculate
      * @return Variance of elements
      */
-    double var(MatrixBuffer<BYTE> &src);
+    double var(MatrixBuffer<uint8_t> &src);
 
     /**
      * @brief Get Sum of x^2 in buffer.
      *        This copies result from gpu because needs of aggregation
      *        across work groups.
-     * @param src MatrixBuffer<BYTE> to calculate
+     * @param src MatrixBuffer<uint8_t> to calculate
      * @return Sum of x^2 in elements
      */
-    long long squareSum(MatrixBuffer<BYTE> &src);
+    std::int64_t squareSum(MatrixBuffer<uint8_t> &src);
 };

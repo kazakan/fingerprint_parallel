@@ -6,8 +6,6 @@
 
 #include "MatrixBuffer.hpp"
 
-#define BYTE uint8_t
-
 class RandomMatrixGenerator {
     const int SEED = 47;
 
@@ -17,10 +15,8 @@ class RandomMatrixGenerator {
 
     RandomMatrixGenerator() : gen(47) {}
 
-    std::tuple<int, int, std::vector<BYTE>> generateMatData(int minValue,
-                                                            int maxValue,
-                                                            int width = -1,
-                                                            int height = -1) {
+    std::tuple<int, int, std::vector<uint8_t>> generateMatData(
+        int minValue, int maxValue, int width = -1, int height = -1) {
         std::uniform_int_distribution<int> sizeDis(4, 1024);
 
         std::uniform_int_distribution<int> valueDist(minValue, maxValue);
@@ -34,7 +30,7 @@ class RandomMatrixGenerator {
         }
 
         const int len = width * height;
-        std::vector<BYTE> arr(len);
+        std::vector<uint8_t> arr(len);
 
         for (int i = 0; i < len; ++i) {
             arr[i] = valueDist(gen);

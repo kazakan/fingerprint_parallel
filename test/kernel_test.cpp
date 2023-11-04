@@ -10,8 +10,6 @@
 #include "OclInfo.hpp"
 #include "random_case_generator.hpp"
 
-#define BYTE uint8_t
-
 TEST(ImageTransformTest, GrayScale) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgTransform imgTransformer(oclInfo);
@@ -19,9 +17,10 @@ TEST(ImageTransformTest, GrayScale) {
 
     //  0: width, 1: height, 2: original data (shape.xy=(3*width,height)),
     // 3: expected result
-    using grayscale_datatype = std::tuple<int, int, vector<BYTE>, vector<BYTE>>;
+    using grayscale_datatype =
+        std::tuple<int, int, std::vector<uint8_t>, std::vector<uint8_t>>;
 
-    vector<grayscale_datatype> datasets{
+    std::vector<grayscale_datatype> datasets{
         {3,
          3,
          {119, 64,  92,  35,  231, 56,  38,  101, 69,   // [R G B R G B R G B]
@@ -40,16 +39,16 @@ TEST(ImageTransformTest, GrayScale) {
     RandomMatrixGenerator generator;
 
     std::mt19937_64 gen(47);
-    std::uniform_int_distribution<int> widthDis(3, 30);
+    std::uniform_int_distribution<int> widthDis(3, 300);
 
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
         const int width = widthDis(gen);
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255, width * 3, 10);
 
-        const vector<BYTE>& arr = std::get<2>(inputData);
-        vector<BYTE> result(width * std::get<1>(inputData));
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
+        std::vector<uint8_t> result(width * std::get<1>(inputData));
 
         for (int i = 0; i < result.size(); ++i) {
             int v = arr[3 * i + 0] * 0.72f + arr[3 * i + 1] * 0.21f +
@@ -62,13 +61,12 @@ TEST(ImageTransformTest, GrayScale) {
     }
 
     auto test_one_pair = [&](grayscale_datatype& data) {
-        cout << "L" << std::get<0>(data) << " " << std::get<1>(data) << " "
-             << std::get<2>(data).size() << endl;
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data) * 3,
-                                          std::get<1>(data), std::get<2>(data));
-        MatrixBuffer<BYTE> bufferResult(std::get<0>(data), std::get<1>(data));
-        MatrixBuffer<BYTE> bufferExpected(std::get<0>(data), std::get<1>(data),
-                                          std::get<3>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data) * 3, std::get<1>(data), std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferResult(std::get<0>(data),
+                                           std::get<1>(data));
+        MatrixBuffer<uint8_t> bufferExpected(
+            std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
         Img img(bufferOriginal, Img::RGB);
 
@@ -105,8 +103,8 @@ TEST(ImageTransformTest, Negate) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgTransform imgTransformer(oclInfo);
 
-    vector<BYTE> vOriginal(256);  // 0,1,2, ... ,255
-    vector<BYTE> vExpected(256);  // 255,254, ... , 0
+    std::vector<uint8_t> vOriginal(256);  // 0,1,2, ... ,255
+    std::vector<uint8_t> vExpected(256);  // 255,254, ... , 0
 
     for (int i = 0; i < 256; ++i) {
         vOriginal[i] = i;
@@ -114,28 +112,30 @@ TEST(ImageTransformTest, Negate) {
     }
 
     // 0: width, 1: height, 2: original data, 3: expected result
-    using negate_datatype = std::tuple<int, int, vector<BYTE>, vector<BYTE>>;
+    using negate_datatype =
+        std::tuple<int, int, std::vector<uint8_t>, std::vector<uint8_t>>;
 
-    vector<negate_datatype> datasets{{1, 256, vOriginal, vExpected},
-                                     {3,
-                                      3,
-                                      {0, 127, 255, 1, 128, 254, 2, 129, 253},
-                                      {255, 128, 0, 254, 127, 1, 253, 126, 2}},
-                                     {1, 1, {0}, {255}},
-                                     {1, 1, {255}, {0}}};
+    std::vector<negate_datatype> datasets{
+        {1, 256, vOriginal, vExpected},
+        {3,
+         3,
+         {0, 127, 255, 1, 128, 254, 2, 129, 253},
+         {255, 128, 0, 254, 127, 1, 253, 126, 2}},
+        {1, 1, {0}, {255}},
+        {1, 1, {255}, {0}}};
 
     // create random data
     RandomMatrixGenerator generator;
 
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255);
 
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
         const int N = arr.size();
 
-        vector<BYTE> expected(N);
+        std::vector<uint8_t> expected(N);
 
         for (int i = 0; i < arr.size(); ++i) {
             expected[i] = 255 - arr[i];
@@ -146,11 +146,12 @@ TEST(ImageTransformTest, Negate) {
     }
 
     auto test_one_pair = [&](negate_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
-                                          std::get<2>(data));
-        MatrixBuffer<BYTE> bufferResult(std::get<0>(data), std::get<1>(data));
-        MatrixBuffer<BYTE> bufferExpected(std::get<0>(data), std::get<1>(data),
-                                          std::get<3>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferResult(std::get<0>(data),
+                                           std::get<1>(data));
+        MatrixBuffer<uint8_t> bufferExpected(
+            std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
         bufferOriginal.createBuffer(oclInfo.ctx);
         bufferResult.createBuffer(oclInfo.ctx);
@@ -172,8 +173,8 @@ TEST(ImageTransformTest, Copy) {
     OclInfo oclInfo = OclInfo::initOpenCL();
     ImgTransform imgTransformer(oclInfo);
 
-    MatrixBuffer<BYTE> bufferOriginal({1, 50, 126, 200, 255});
-    MatrixBuffer<BYTE> bufferCopied(1, 5);
+    MatrixBuffer<uint8_t> bufferOriginal({1, 50, 126, 200, 255});
+    MatrixBuffer<uint8_t> bufferCopied(1, 5);
 
     bufferOriginal.createBuffer(oclInfo.ctx);
     bufferCopied.createBuffer(oclInfo.ctx);
@@ -193,9 +194,10 @@ TEST(ImageTransformTest, Normalize) {
 
     // 0: M0, 1: V0, 2: width, 3: height, 4: original data, 5: expected result
     using normalize_datatype =
-        std::tuple<int, int, int, int, vector<BYTE>, vector<BYTE>>;
+        std::tuple<int, int, int, int, std::vector<uint8_t>,
+                   std::vector<uint8_t>>;
 
-    vector<normalize_datatype> datasets{
+    std::vector<normalize_datatype> datasets{
         {128,
          2000,
          3,
@@ -219,12 +221,12 @@ TEST(ImageTransformTest, Normalize) {
 
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255, 5, 5);
 
         const int NC = std::get<0>(inputData);
         const int NR = std::get<1>(inputData);
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
 
         const float mean0 = static_cast<float>(meanDis(gen));
         const float var0 = static_cast<float>(varDis(gen));
@@ -240,24 +242,25 @@ TEST(ImageTransformTest, Normalize) {
         double mean = static_cast<double>(sum) / N;
         double var = static_cast<double>(squareSum) / N - mean * mean;
 
-        vector<BYTE> result(arr.size());
+        std::vector<uint8_t> result(arr.size());
 
         for (int i = 0; i < arr.size(); ++i) {
             float pixel = static_cast<float>(arr[i]);
             float delta = abs(pixel - mean) * sqrtf(var0 / var);
             int val = pixel > mean ? mean0 + delta : mean0 - delta;
-            result[i] = clamp(val, 0, 255);
+            result[i] = std::clamp(val, 0, 255);
         }
 
         datasets.push_back({mean0, var0, NC, NR, arr, result});
     }
 
     auto test_one_pair = [&](normalize_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<2>(data), std::get<3>(data),
-                                          std::get<4>(data));
-        MatrixBuffer<BYTE> bufferResult(std::get<2>(data), std::get<3>(data));
-        MatrixBuffer<BYTE> bufferExpected(std::get<2>(data), std::get<3>(data),
-                                          std::get<5>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<2>(data), std::get<3>(data), std::get<4>(data));
+        MatrixBuffer<uint8_t> bufferResult(std::get<2>(data),
+                                           std::get<3>(data));
+        MatrixBuffer<uint8_t> bufferExpected(
+            std::get<2>(data), std::get<3>(data), std::get<5>(data));
 
         bufferOriginal.createBuffer(oclInfo.ctx);
         bufferResult.createBuffer(oclInfo.ctx);
@@ -272,15 +275,6 @@ TEST(ImageTransformTest, Normalize) {
 
         bufferResult.toHost(oclInfo);
 
-        cout << "m0" << std::get<0>(data) << "v0" << std::get<1>(data) << "v"
-             << mean << "v" << var << endl;
-        for (int v : std::get<4>(data)) cout << v << " ";
-        cout << endl;
-        for (int v : std::get<5>(data)) cout << v << " ";
-        cout << endl;
-        for (int i = 0; i < std::get<4>(data).size(); ++i)
-            cout << (int)bufferResult.getData()[i] << " ";
-        cout << endl << endl;
         ASSERT_EQ(bufferResult, bufferExpected);
     };
 
@@ -296,9 +290,10 @@ TEST(ImageTransformTest, DynamicThresholding) {
     // 0: blockSize, 1: scale, 2: width, 3: height, 4: original data, 5:
     // expected result
     using dynamic_thresholding_datatype =
-        std::tuple<int, float, int, int, vector<BYTE>, vector<BYTE>>;
+        std::tuple<int, float, int, int, std::vector<uint8_t>,
+                   std::vector<uint8_t>>;
 
-    vector<dynamic_thresholding_datatype> datasets{
+    std::vector<dynamic_thresholding_datatype> datasets{
         {
             3,
             1.05,
@@ -348,18 +343,18 @@ TEST(ImageTransformTest, DynamicThresholding) {
 
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255);
 
         const int NC = std::get<0>(inputData);
         const int NR = std::get<1>(inputData);
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
 
         const int halfBlockSize = halfBlockSizeDis(gen);
         const int blockSize = halfBlockSize * 2 + 1;
         const float scale = scaleDis(gen);
 
-        const auto value = [&](int r, int c) -> const BYTE {
+        const auto value = [&](int r, int c) -> const uint8_t {
             if (r < 0 || r >= NR || c < 0 || c >= NC) {
                 return 0;
             }
@@ -367,7 +362,7 @@ TEST(ImageTransformTest, DynamicThresholding) {
             return arr[NC * r + c];
         };
 
-        const auto dynamicThresholdVal = [&](int idx) -> const BYTE {
+        const auto dynamicThresholdVal = [&](int idx) -> const uint8_t {
             const int r = idx / NC;
             const int c = idx % NC;
 
@@ -387,7 +382,7 @@ TEST(ImageTransformTest, DynamicThresholding) {
             return value(r, c) > mean ? 255 : 0;
         };
 
-        vector<BYTE> result(arr.size());
+        std::vector<uint8_t> result(arr.size());
 
         for (int i = 0; i < arr.size(); ++i) {
             result[i] = dynamicThresholdVal(i);
@@ -397,11 +392,12 @@ TEST(ImageTransformTest, DynamicThresholding) {
     }
 
     auto test_one_pair = [&](dynamic_thresholding_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<2>(data), std::get<3>(data),
-                                          std::get<4>(data));
-        MatrixBuffer<BYTE> bufferResult(std::get<2>(data), std::get<3>(data));
-        MatrixBuffer<BYTE> bufferExpected(std::get<2>(data), std::get<3>(data),
-                                          std::get<5>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<2>(data), std::get<3>(data), std::get<4>(data));
+        MatrixBuffer<uint8_t> bufferResult(std::get<2>(data),
+                                           std::get<3>(data));
+        MatrixBuffer<uint8_t> bufferExpected(
+            std::get<2>(data), std::get<3>(data), std::get<5>(data));
 
         bufferOriginal.createBuffer(oclInfo.ctx);
         bufferResult.createBuffer(oclInfo.ctx);
@@ -425,9 +421,10 @@ TEST(ImageTransformTest, ApplyGaussian) {
     ImgTransform imgTransformer(oclInfo);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using gaussian_datatype = std::tuple<int, int, vector<BYTE>, vector<BYTE>>;
+    using gaussian_datatype =
+        std::tuple<int, int, std::vector<uint8_t>, std::vector<uint8_t>>;
 
-    vector<gaussian_datatype> datasets{
+    std::vector<gaussian_datatype> datasets{
         {5,
          5,
          {0, 0, 0,   0, 0,  //
@@ -458,14 +455,14 @@ TEST(ImageTransformTest, ApplyGaussian) {
     RandomMatrixGenerator generator;
     const int nRandomCases = 100;
     for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        tuple<int, int, vector<BYTE>> inputData =
+        std::tuple<int, int, std::vector<uint8_t>> inputData =
             generator.generateMatData(0, 255, 5, 5);
 
         const int NC = std::get<0>(inputData);
         const int NR = std::get<1>(inputData);
-        const vector<BYTE>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(inputData);
 
-        const auto value = [&](int r, int c) -> const BYTE {
+        const auto value = [&](int r, int c) -> const uint8_t {
             if (r < 0 || r >= NR || c < 0 || c >= NC) {
                 return 0;
             }
@@ -477,11 +474,11 @@ TEST(ImageTransformTest, ApplyGaussian) {
         const int dy[] = {-1, -1, -1, 0, 0, 0, 1, 1, 1};
         const int weight[] = {1, 2, 1, 2, 4, 2, 1, 2, 1};
 
-        const auto gaussianVal = [&](int idx) -> const BYTE {
+        const auto gaussianVal = [&](int idx) -> const uint8_t {
             const int r = idx / NC;
             const int c = idx % NC;
 
-            BYTE ret = 0;
+            uint8_t ret = 0;
             int sum = 0;
 
             for (int i = 0; i < 9; ++i) {
@@ -493,7 +490,7 @@ TEST(ImageTransformTest, ApplyGaussian) {
             return ret;
         };
 
-        vector<BYTE> result(arr.size());
+        std::vector<uint8_t> result(arr.size());
 
         for (int i = 0; i < arr.size(); ++i) {
             result[i] = gaussianVal(i);
@@ -503,11 +500,12 @@ TEST(ImageTransformTest, ApplyGaussian) {
     }
 
     auto test_one_pair = [&](gaussian_datatype& data) {
-        MatrixBuffer<BYTE> bufferOriginal(std::get<0>(data), std::get<1>(data),
-                                          std::get<2>(data));
-        MatrixBuffer<BYTE> bufferResult(std::get<0>(data), std::get<1>(data));
-        MatrixBuffer<BYTE> bufferExpected(std::get<0>(data), std::get<1>(data),
-                                          std::get<3>(data));
+        MatrixBuffer<uint8_t> bufferOriginal(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
+        MatrixBuffer<uint8_t> bufferResult(std::get<0>(data),
+                                           std::get<1>(data));
+        MatrixBuffer<uint8_t> bufferExpected(
+            std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
         bufferOriginal.createBuffer(oclInfo.ctx);
         bufferResult.createBuffer(oclInfo.ctx);

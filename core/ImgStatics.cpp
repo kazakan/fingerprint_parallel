@@ -1,5 +1,7 @@
 #include "ImgStatics.hpp"
 
+#include <cstdint>
+
 #include "ocl_core_src.hpp"
 
 ImgStatics::ImgStatics(OclInfo oclInfo) {
@@ -12,7 +14,7 @@ ImgStatics::ImgStatics(OclInfo oclInfo) {
     if (err) throw OclBuildException(err);
 }
 
-long long ImgStatics::sum(MatrixBuffer<BYTE> &src) {
+std::int64_t ImgStatics::sum(MatrixBuffer<uint8_t> &src) {
     cl::Kernel kernel(program, "sum");
 
     int N = src.getLen();
@@ -36,8 +38,8 @@ long long ImgStatics::sum(MatrixBuffer<BYTE> &src) {
 
     tmp.toHost(oclInfo);
 
-    long long result = 0;
-    long long *data = tmp.getData();
+    std::int64_t result = 0;
+    cl_long *data = tmp.getData();
     for (int i = 0; i < n_groups; ++i) {
         result += data[i];
     }
@@ -45,13 +47,13 @@ long long ImgStatics::sum(MatrixBuffer<BYTE> &src) {
     return result;
 }
 
-double ImgStatics::mean(MatrixBuffer<BYTE> &src) {
+double ImgStatics::mean(MatrixBuffer<uint8_t> &src) {
     const int N = src.getLen();
     double result = static_cast<double>(sum(src)) / N;
     return result;
 }
 
-double ImgStatics::var(MatrixBuffer<BYTE> &src) {
+double ImgStatics::var(MatrixBuffer<uint8_t> &src) {
     const int N = src.getLen();
     double mean = static_cast<double>(sum(src)) / N;
     long long elementSquareSum = squareSum(src);
@@ -59,7 +61,7 @@ double ImgStatics::var(MatrixBuffer<BYTE> &src) {
     return result;
 }
 
-long long ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
+std::int64_t ImgStatics::squareSum(MatrixBuffer<uint8_t> &src) {
     cl::Kernel kernel(program, "squareSum");
 
     int N = src.getLen();
@@ -83,8 +85,8 @@ long long ImgStatics::squareSum(MatrixBuffer<BYTE> &src) {
 
     tmp.toHost(oclInfo);
 
-    long long result = 0;
-    long long *data = tmp.getData();
+    std::int64_t result = 0;
+    cl_long *data = tmp.getData();
     for (int i = 0; i < n_groups; ++i) {
         result += data[i];
     }

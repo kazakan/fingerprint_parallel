@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ostream>
@@ -11,8 +12,6 @@
 #include "OclException.hpp"
 #include "OclInfo.hpp"
 
-#define BYTE uint8_t
-
 /**
  * @brief Class represents Matrix. May contains related Opencl Buffer object.
  *
@@ -21,9 +20,9 @@ template <typename T>
 class MatrixBuffer {
    private:
     T *_data = nullptr;
-    unsigned int _width;
-    unsigned int _height;
-    unsigned long long _len;
+    std::size_t _width;
+    std::size_t _height;
+    std::size_t _len;
     cl::Buffer *_buffer = nullptr;
 
    public:
@@ -32,7 +31,7 @@ class MatrixBuffer {
      * @param width width of image. Number of pixels in row.
      * @param height height of image. Number of pixels in column.
      */
-    MatrixBuffer(int width, int height)
+    MatrixBuffer(std::size_t width, std::size_t height)
         : _width(width), _height(height), _len(width * height) {
         _data = new T[_len];
     };
@@ -49,12 +48,12 @@ class MatrixBuffer {
      * @param height height of image. Number of pixels in column.
      * @param data initial data
      */
-    MatrixBuffer(int width, int height, std::vector<T> data)
+    MatrixBuffer(std::size_t width, std::size_t height, std::vector<T> data)
         : _width(width), _height(height), _len(width * height) {
         _data = new T[_len];
 
-        const unsigned long long limit =
-            std::min(_len, static_cast<unsigned long long>(data.size()));
+        const std::size_t limit =
+            std::min(_len, static_cast<std::size_t>(data.size()));
         for (int i = 0; i < limit; ++i) {
             _data[i] = data[i];
         }
@@ -97,19 +96,19 @@ class MatrixBuffer {
      * @brief Get width of matrix.
      * @return Width of matrix
      */
-    const unsigned int getWidth() const { return _width; }
+    const std::size_t getWidth() const { return _width; }
 
     /**
      * @brief Get height of matrix.
      * @return Height of matrix
      */
-    const unsigned int getHeight() const { return _height; }
+    const std::size_t getHeight() const { return _height; }
 
     /**
      * @brief Get numbers of elements in matrix. (width*height)
      * @return width*height
      */
-    const unsigned int getLen() const { return _len; }
+    const std::size_t getLen() const { return _len; }
 
     /**
      * @brief  Get pointer that points first element of matrix.
