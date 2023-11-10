@@ -1,16 +1,24 @@
 
 #include "main.hpp"
 
+#include <FreeImage.h>
+
 #include <memory>
 
 #include "ImgTransform.hpp"
 #include "MatrixBuffer.hpp"
 #include "MinutiaeDetector.hpp"
 #include "OclInfo.hpp"
+#include "ScalarBuffer.hpp"
+
+#define MAX_SOURCE_SIZE (0x100000)
 
 using namespace std;
 
-#define MAX_SOURCE_SIZE (0x100000)
+namespace fingerprint_parallel {
+namespace driver {
+
+using namespace fingerprint_parallel::core;
 
 string readFile(string path) {
     ifstream ifs(path);
@@ -18,132 +26,131 @@ string readFile(string path) {
                   (istreambuf_iterator<char>()));
 }
 
-unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& oclInfo,
-                                          ImgTransform& imgTransformer,
-                                          ImgStatics& imgStatics,
+unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
+                                          ImgTransform& img_transformer,
+                                          ImgStatics& img_statics,
                                           MinutiaeDetector& detector,
                                           const string& resultPrefix = "") {
     cl::ImageFormat imgFormat(CL_RGBA, CL_UNSIGNED_INT8);
     unique_ptr<MatrixBuffer<BYTE>> mainBuffer =
-        make_unique<MatrixBuffer<BYTE>>(img.width, img.height);
-    MatrixBuffer<BYTE> tmpBuffer(img.width, img.height);
+        make_unique<MatrixBuffer<BYTE>>(img.width(), img.height());
+    MatrixBuffer<BYTE> tmpBuffer(img.width(), img.height());
 
-    cl::Image2D climg(oclInfo.ctx, CL_MEM_READ_WRITE, imgFormat, img.width,
-                      img.height, 0, 0);
+    cl::Image2D climg(ocl_info.ctx_, CL_MEM_READ_WRITE, imgFormat, img.width(),
+                      img.height(), 0, 0);
 
-    int err = oclInfo.queue.enqueueWriteImage(
-        climg, CL_FALSE, {0, 0, 0}, {img.width, img.height, 1}, 0, 0, img.data);
+    int err = ocl_info.queue_.enqueueWriteImage(climg, CL_FALSE, {0, 0, 0},
+                                                {img.width(), img.height(), 1},
+                                                0, 0, img.data());
     if (err) throw OclException("Error while enqueue image", err);
 
-    mainBuffer->createBuffer(oclInfo.ctx);
-    tmpBuffer.createBuffer(oclInfo.ctx);
+    mainBuffer->create_buffer(ocl_info.ctx_);
+    tmpBuffer.create_buffer(ocl_info.ctx_);
 
-    imgTransformer.toGrayScale(climg, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
+    img_transformer.to_gray_scale(climg, tmpBuffer);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->toHost(oclInfo);
+    mainBuffer->to_host(ocl_info);
     Img resultGray(*mainBuffer);
-    resultGray.saveImage(resultPrefix + "resultGray.png");
+    resultGray.save_image(resultPrefix + "resultGray.png");
 
     // negate
 
-    imgTransformer.negate(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    mainBuffer->toHost(oclInfo);
+    img_transformer.negate(*mainBuffer, tmpBuffer);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
+    mainBuffer->to_host(ocl_info);
     Img resultNegate(*mainBuffer);
-    resultNegate.saveImage(resultPrefix + "resultNegate.png");
-
-    // normalize
-    float mean = imgStatics.mean(*mainBuffer);
-    float var = imgStatics.var(*mainBuffer);
-
-    imgTransformer.normalize(*mainBuffer, tmpBuffer, 128, 2000, mean, var);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-
-    mainBuffer->toHost(oclInfo);
-    Img resultNormalize(*mainBuffer);
-    resultNormalize.saveImage(resultPrefix + "resultNormalize.png");
+    resultNegate.save_image(resultPrefix + "resultNegate.png");
 
     // gaussian filter
-    imgTransformer.applyGaussianFilter(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    imgTransformer.applyGaussianFilter(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    imgTransformer.applyGaussianFilter(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    imgTransformer.applyGaussianFilter(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    imgTransformer.applyGaussianFilter(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
+    img_transformer.gaussian_filter(*mainBuffer, tmpBuffer);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->toHost(oclInfo);
+    mainBuffer->to_host(ocl_info);
     Img resultGaussian(*mainBuffer);
-    resultGaussian.saveImage(resultPrefix + "resultGaussian.png");
+    resultGaussian.save_image(resultPrefix + "resultGaussian.png");
+
+    // normalize
+    ScalarBuffer<float> mean;
+    ScalarBuffer<float> var;
+
+    mean.create_buffer(ocl_info.ctx_);
+    var.create_buffer(ocl_info.ctx_);
+
+    img_statics.mean(*mainBuffer, mean);
+    img_statics.var(*mainBuffer, var);
+
+    img_transformer.normalize(*mainBuffer, tmpBuffer, 128, 1000, mean, var);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
+
+    mainBuffer->to_host(ocl_info);
+    Img resultNormalize(*mainBuffer);
+    resultNormalize.save_image(resultPrefix + "resultNormalize.png");
 
     // dynamic thresholding
-    // imgTransformer.applyDynamicThresholding(*mainBuffer, tmpBuffer, 5, 1.00);
-    // imgTransformer.copy(tmpBuffer, *mainBuffer);
+    // img_transformer.applyDynamicThresholding(*mainBuffer, tmpBuffer,
+    // 3, 1.001); img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    // mainBuffer->toHost(oclInfo);
+    // mainBuffer->toHost(ocl_info);
     // Img resultDynamicThresholding(*mainBuffer);
     // resultDynamicThresholding.saveImage(resultPrefix+"resultDynamicThresholding.png");
 
     // binarize
-    imgTransformer.binarize(*mainBuffer, tmpBuffer, 200);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
+    img_transformer.binarize(*mainBuffer, tmpBuffer, 200);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->toHost(oclInfo);
+    mainBuffer->to_host(ocl_info);
     Img resultBinarize(*mainBuffer);
-    resultBinarize.saveImage(resultPrefix + "resultBinarize.png");
+    resultBinarize.save_image(resultPrefix + "resultBinarize.png");
 
     // thinning
-    imgTransformer.applyThinning8(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
+    img_transformer.thinning8(*mainBuffer, tmpBuffer);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->toHost(oclInfo);
+    mainBuffer->to_host(ocl_info);
     Img resultThinning(*mainBuffer);
-    resultThinning.saveImage(resultPrefix + "resultThinning.png");
+    resultThinning.save_image(resultPrefix + "resultThinning.png");
 
     // cross number
-    detector.applyCrossNumber(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    tmpBuffer.toHost(oclInfo);
+    detector.apply_cross_number(*mainBuffer, tmpBuffer);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
+    tmpBuffer.to_host(ocl_info);
 
-    detector.removeFalseMinutiae(*mainBuffer, tmpBuffer);
-    imgTransformer.copy(tmpBuffer, *mainBuffer);
-    tmpBuffer.toHost(oclInfo);
+    detector.remove_false_minutiae(*mainBuffer, tmpBuffer);
+    img_transformer.copy(tmpBuffer, *mainBuffer);
+    tmpBuffer.to_host(ocl_info);
 
     Img resultCrossNumber(tmpBuffer);
 
-    for (int i = 0; i < tmpBuffer.getLen(); ++i) {
-        BYTE val = tmpBuffer.getData()[i];
+    for (int i = 0; i < tmpBuffer.size(); ++i) {
+        BYTE val = tmpBuffer.data()[i];
         if (val != 0) {
             // cout << "Found type " << (int)val << " at " << i << "\n";
-            tmpBuffer.getData()[i] = 255;  // for visualize
+            tmpBuffer.data()[i] = 255;  // for visualize
 
             if (val == 1) {  // B
-                resultCrossNumber.data[i * 4] = 255;
-                resultCrossNumber.data[i * 4 + 1] = 0;
-                resultCrossNumber.data[i * 4 + 2] = 0;
-                resultCrossNumber.data[i * 4 + 3] = 255;
+                resultCrossNumber.data()[i * 4] = 255;
+                resultCrossNumber.data()[i * 4 + 1] = 0;
+                resultCrossNumber.data()[i * 4 + 2] = 0;
+                resultCrossNumber.data()[i * 4 + 3] = 255;
             } else if (val == 3) {  // G
-                resultCrossNumber.data[i * 4] = 0;
-                resultCrossNumber.data[i * 4 + 1] = 255;
-                resultCrossNumber.data[i * 4 + 2] = 0;
-                resultCrossNumber.data[i * 4 + 3] = 255;
+                resultCrossNumber.data()[i * 4] = 0;
+                resultCrossNumber.data()[i * 4 + 1] = 255;
+                resultCrossNumber.data()[i * 4 + 2] = 0;
+                resultCrossNumber.data()[i * 4 + 3] = 255;
             } else if (val == 4) {  // R
-                resultCrossNumber.data[i * 4] = 0;
-                resultCrossNumber.data[i * 4 + 1] = 0;
-                resultCrossNumber.data[i * 4 + 2] = 255;
-                resultCrossNumber.data[i * 4 + 3] = 255;
+                resultCrossNumber.data()[i * 4] = 0;
+                resultCrossNumber.data()[i * 4 + 1] = 0;
+                resultCrossNumber.data()[i * 4 + 2] = 255;
+                resultCrossNumber.data()[i * 4 + 3] = 255;
             }
 
         } else {
-            tmpBuffer.getData()[i] = 0;
+            tmpBuffer.data()[i] = 0;
         }
     }
 
-    resultCrossNumber.saveImage(resultPrefix + "resultCrossNumber.png");
+    resultCrossNumber.save_image(resultPrefix + "resultCrossNumber.png");
 
     return mainBuffer;
 }
@@ -159,26 +166,26 @@ void run1() {
     LOG("Running");
 
     // init opencl
-    OclInfo oclInfo = OclInfo::initOpenCL();
+    OclInfo ocl_info = OclInfo::init_opencl();
     DLOG("Opencl initialized");
 
     // init kernels
-    ImgTransform imgTransformer(oclInfo);
-    ImgStatics imgStatics(oclInfo);
-    MinutiaeDetector detector(oclInfo);
+    ImgTransform img_transformer(ocl_info);
+    ImgStatics img_statics(ocl_info);
+    MinutiaeDetector detector(ocl_info);
 
     LOG("kernel loaded");
 
     // load image
-    Img img1(pathPrefix + "101_2.tif");
+    Img img1(pathPrefix + "101_3.tif");
     Img img2(pathPrefix + "101_4.tif");
 
     LOG("Image loaded");
 
     unique_ptr<MatrixBuffer<BYTE>> buffer1 = preprocess(
-        img1, oclInfo, imgTransformer, imgStatics, detector, "img1_");
+        img1, ocl_info, img_transformer, img_statics, detector, "img1_");
     unique_ptr<MatrixBuffer<BYTE>> buffer2 = preprocess(
-        img2, oclInfo, imgTransformer, imgStatics, detector, "img2_");
+        img2, ocl_info, img_transformer, img_statics, detector, "img2_");
 
     LOG("Image Preprocessed");
 
@@ -196,37 +203,40 @@ void identicalRun() {
     LOG("Running");
 
     // init opencl
-    OclInfo oclInfo = OclInfo::initOpenCL();
+    OclInfo ocl_info = OclInfo::init_opencl();
     DLOG("Opencl initialized");
 
     // init kernels
-    ImgTransform imgTransformer(oclInfo);
-    ImgStatics imgStatics(oclInfo);
-    MinutiaeDetector detector(oclInfo);
+    ImgTransform img_transformer(ocl_info);
+    ImgStatics img_statics(ocl_info);
+    MinutiaeDetector detector(ocl_info);
 
     LOG("kernel loaded");
 
     // load image
-    Img img1(pathPrefix + "101_2.tif");
-    Img img2(pathPrefix + "101_2.tif");
+    Img img1(pathPrefix + "101_3.tif");
+    Img img2(pathPrefix + "101_4.tif");
 
     LOG("Image loaded");
 
     unique_ptr<MatrixBuffer<BYTE>> buffer1 = preprocess(
-        img1, oclInfo, imgTransformer, imgStatics, detector, "img1_");
+        img1, ocl_info, img_transformer, img_statics, detector, "img1_");
     unique_ptr<MatrixBuffer<BYTE>> buffer2 = preprocess(
-        img2, oclInfo, imgTransformer, imgStatics, detector, "img2_");
+        img2, ocl_info, img_transformer, img_statics, detector, "img2_");
 
     LOG("Image Preprocessed");
 
     FreeImage_DeInitialise();
 }
 
+}  // namespace driver
+}  // namespace fingerprint_parallel
+
 // driver code
 int main(int argc, char** argv) {
     cout << argv[0] << endl;
 
-    identicalRun();
-    // run1();
+    // fingerprint_parallel::driver::identicalRun();
+    fingerprint_parallel::driver::run1();
     return 0;
 }

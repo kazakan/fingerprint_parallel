@@ -1,17 +1,21 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <numeric>
 #include <vector>
 
 #include "ImgStatics.hpp"
 #include "OclInfo.hpp"
+#include "ScalarBuffer.hpp"
 #include "random_case_generator.hpp"
 
+using namespace fingerprint_parallel::core;
+
 TEST(ImgStaticsTest, Sum) {
-    OclInfo oclInfo = OclInfo::initOpenCL();
-    ImgStatics imgStatics(oclInfo);
+    OclInfo ocl_info = OclInfo::init_opencl();
+    ImgStatics img_statics(ocl_info);
 
     //  0: width, 1: height, 2: original data, 3: expected result
     using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, int>;
@@ -25,35 +29,40 @@ TEST(ImgStaticsTest, Sum) {
 
     // Create random data
     RandomMatrixGenerator generator;
-    const int nRandomCases = 100;
-    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        std::tuple<int, int, std::vector<uint8_t>> inputData =
-            generator.generateMatData(0, 255);
+    const int n_random_cases = 100;
+    for (int random_case_no = 0; random_case_no < n_random_cases;
+         ++random_case_no) {
+        std::tuple<int, int, std::vector<uint8_t>> input_data =
+            generator.generate_matrix_data(0, 255);
 
-        const std::vector<uint8_t>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(input_data);
         const int N = arr.size();
 
-        long long sum = 0;
+        int64_t sum = 0;
 
         for (int i = 0; i < N; ++i) {
             sum += arr[i];
         }
 
         datasets.push_back(
-            {std::get<0>(inputData), std::get<1>(inputData), arr, sum});
+            {std::get<0>(input_data), std::get<1>(input_data), arr, sum});
     }
 
     auto test_one_pair = [&](sum_datatype& data) {
-        MatrixBuffer<uint8_t> bufferOriginal(
+        MatrixBuffer<uint8_t> buffer_original(
             std::get<0>(data), std::get<1>(data), std::get<2>(data));
         double expected = std::get<3>(data);
 
-        bufferOriginal.createBuffer(oclInfo.ctx);
-        bufferOriginal.toGpu(oclInfo);
+        ScalarBuffer<uint64_t> result;
 
-        double result = imgStatics.sum(bufferOriginal);
+        buffer_original.create_buffer(ocl_info.ctx_);
+        buffer_original.to_gpu(ocl_info);
+        result.create_buffer(ocl_info.ctx_);
 
-        ASSERT_EQ(result, expected);
+        img_statics.sum(buffer_original, result);
+        result.to_host(ocl_info);
+
+        ASSERT_EQ(result.value(), expected);
     };
 
     for (auto& data : datasets) {
@@ -62,11 +71,11 @@ TEST(ImgStaticsTest, Sum) {
 }
 
 TEST(ImgStaticsTest, SqaureSum) {
-    OclInfo oclInfo = OclInfo::initOpenCL();
-    ImgStatics imgStatics(oclInfo);
+    OclInfo ocl_info = OclInfo::init_opencl();
+    ImgStatics img_statics(ocl_info);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, long long>;
+    using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, int64_t>;
 
     std::vector<sum_datatype> datasets{
         {3, 3, {1, 2, 3, 4, 5, 6, 7, 8, 9}, 285},
@@ -74,35 +83,40 @@ TEST(ImgStaticsTest, SqaureSum) {
 
     // Create random data
     RandomMatrixGenerator generator;
-    const int nRandomCases = 100;
-    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        std::tuple<int, int, std::vector<uint8_t>> inputData =
-            generator.generateMatData(0, 255);
+    const int n_random_cases = 100;
+    for (int random_case_no = 0; random_case_no < n_random_cases;
+         ++random_case_no) {
+        std::tuple<int, int, std::vector<uint8_t>> input_data =
+            generator.generate_matrix_data(0, 255);
 
-        const std::vector<uint8_t>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(input_data);
         const int N = arr.size();
 
-        long long sum = 0;
+        int64_t sum = 0;
 
-        for (long long v : arr) {
+        for (int64_t v : arr) {
             sum += v * v;
         }
 
         datasets.push_back(
-            {std::get<0>(inputData), std::get<1>(inputData), arr, sum});
+            {std::get<0>(input_data), std::get<1>(input_data), arr, sum});
     }
 
     auto test_one_pair = [&](sum_datatype& data) {
-        MatrixBuffer<uint8_t> bufferOriginal(
+        MatrixBuffer<uint8_t> buffer_original(
             std::get<0>(data), std::get<1>(data), std::get<2>(data));
+        ScalarBuffer<uint64_t> result;
         double expected = std::get<3>(data);
 
-        bufferOriginal.createBuffer(oclInfo.ctx);
-        bufferOriginal.toGpu(oclInfo);
+        buffer_original.create_buffer(ocl_info.ctx_);
+        buffer_original.to_gpu(ocl_info);
+        result.create_buffer(ocl_info.ctx_);
 
-        double result = imgStatics.squareSum(bufferOriginal);
+        img_statics.square_sum(buffer_original, result);
 
-        ASSERT_EQ(result, expected);
+        result.to_host(ocl_info);
+
+        ASSERT_EQ(result.value(), expected);
     };
 
     for (auto& data : datasets) {
@@ -111,8 +125,8 @@ TEST(ImgStaticsTest, SqaureSum) {
 }
 
 TEST(ImgStaticsTest, Mean) {
-    OclInfo oclInfo = OclInfo::initOpenCL();
-    ImgStatics imgStatics(oclInfo);
+    OclInfo ocl_info = OclInfo::init_opencl();
+    ImgStatics img_statics(ocl_info);
 
     //  0: width, 1: height, 2: original data, 3: expected result
     using sum_datatype = std::tuple<int, int, std::vector<uint8_t>, float>;
@@ -126,15 +140,16 @@ TEST(ImgStaticsTest, Mean) {
 
     // Create random data
     RandomMatrixGenerator generator;
-    const int nRandomCases = 100;
-    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        std::tuple<int, int, std::vector<uint8_t>> inputData =
-            generator.generateMatData(0, 255);
+    const int n_random_cases = 100;
+    for (int random_case_no = 0; random_case_no < n_random_cases;
+         ++random_case_no) {
+        std::tuple<int, int, std::vector<uint8_t>> input_data =
+            generator.generate_matrix_data(0, 255);
 
-        const std::vector<uint8_t>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(input_data);
         const int N = arr.size();
 
-        long long sum = 0;
+        int64_t sum = 0;
 
         for (int i = 0; i < N; ++i) {
             sum += arr[i];
@@ -143,20 +158,25 @@ TEST(ImgStaticsTest, Mean) {
         float mean = static_cast<float>(sum) / N;
 
         datasets.push_back(
-            {std::get<0>(inputData), std::get<1>(inputData), arr, mean});
+            {std::get<0>(input_data), std::get<1>(input_data), arr, mean});
     }
 
     auto test_one_pair = [&](sum_datatype& data) {
-        MatrixBuffer<uint8_t> bufferOriginal(
+        MatrixBuffer<uint8_t> buffer_original(
             std::get<0>(data), std::get<1>(data), std::get<2>(data));
-        double expected = std::get<3>(data);
+        ScalarBuffer<float> result;
+        float expected = std::get<3>(data);
 
-        bufferOriginal.createBuffer(oclInfo.ctx);
-        bufferOriginal.toGpu(oclInfo);
+        buffer_original.create_buffer(ocl_info.ctx_);
+        buffer_original.to_gpu(ocl_info);
 
-        float result = imgStatics.mean(bufferOriginal);
+        result.create_buffer(ocl_info.ctx_);
 
-        ASSERT_NEAR(result, expected, 0.0001);
+        img_statics.mean(buffer_original, result);
+
+        result.to_host(ocl_info);
+
+        ASSERT_NEAR(result.value(), expected, 0.0001);
     };
 
     for (auto& data : datasets) {
@@ -165,11 +185,11 @@ TEST(ImgStaticsTest, Mean) {
 }
 
 TEST(ImgStaticsTest, Var) {
-    OclInfo oclInfo = OclInfo::initOpenCL();
-    ImgStatics imgStatics(oclInfo);
+    OclInfo ocl_info = OclInfo::init_opencl();
+    ImgStatics img_statics(ocl_info);
 
     //  0: width, 1: height, 2: original data, 3: expected result
-    using var_datatype = std::tuple<int, int, std::vector<uint8_t>, double>;
+    using var_datatype = std::tuple<int, int, std::vector<uint8_t>, float>;
 
     std::vector<var_datatype> datasets{
         {3, 3, {76, 49, 136, 167, 143, 160, 75, 220, 71}, 2884.98765432},
@@ -177,42 +197,49 @@ TEST(ImgStaticsTest, Var) {
 
     // Create random data
     RandomMatrixGenerator generator;
-    const int nRandomCases = 100;
-    for (int randomCaseNo = 0; randomCaseNo < nRandomCases; ++randomCaseNo) {
-        std::tuple<int, int, std::vector<uint8_t>> inputData =
-            generator.generateMatData(0, 255);
+    const int n_random_cases = 100;
+    for (int random_case_no = 0; random_case_no < n_random_cases;
+         ++random_case_no) {
+        std::tuple<int, int, std::vector<uint8_t>> input_data =
+            generator.generate_matrix_data(0, 255, 16, 512);
 
-        const std::vector<uint8_t>& arr = std::get<2>(inputData);
+        const std::vector<uint8_t>& arr = std::get<2>(input_data);
 
-        long long sum = 0;
-        long long squareSum = 0;
+        int64_t sum = 0;
+        int64_t square_sum = 0;
         const int N = arr.size();
 
         for (int i = 0; i < N; ++i) {
-            long long v = arr[i];
+            int64_t v = arr[i];
             sum += v;
-            squareSum += v * v;
+            square_sum += v * v;
         }
 
-        double mean = static_cast<double>(sum) / N;
-        double expected = static_cast<double>(squareSum) / N - mean * mean;
+        float mean = static_cast<float>(sum) / N;
+        float expected = static_cast<float>(square_sum) / N - mean * mean;
 
         datasets.push_back(
-            {std::get<0>(inputData), std::get<1>(inputData), arr, expected});
+            {std::get<0>(input_data), std::get<1>(input_data), arr, expected});
     }
 
     auto test_one_pair = [&](var_datatype& data) {
-        MatrixBuffer<uint8_t> bufferOriginal(
+        MatrixBuffer<uint8_t> buffer_original(
             std::get<0>(data), std::get<1>(data), std::get<2>(data));
+        ScalarBuffer<float> result;
 
-        double expected = std::get<3>(data);
+        float expected = std::get<3>(data);
 
-        bufferOriginal.createBuffer(oclInfo.ctx);
-        bufferOriginal.toGpu(oclInfo);
+        buffer_original.create_buffer(ocl_info.ctx_);
+        buffer_original.to_gpu(ocl_info);
 
-        double result = imgStatics.var(bufferOriginal);
+        result.create_buffer(ocl_info.ctx_);
 
-        ASSERT_NEAR(result, expected, 0.0001);
+        img_statics.var(buffer_original, result);
+        result.to_host(ocl_info);
+
+        float relative_err = abs((result.value() - expected) / result.value());
+
+        ASSERT_LE(relative_err, 0.000001);
     };
 
     for (auto& data : datasets) {

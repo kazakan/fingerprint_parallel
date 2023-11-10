@@ -27,14 +27,15 @@ __kernel void gray(__read_only image2d_t src, __global uchar *dst, int width,
     pixel.xyz = pixel.x * 0.72f + pixel.y * 0.21f + pixel.z * 0.07f;
 
     int ret = pixel.x;
-    if(ret > 255) ret = 255;
+    if (ret > 255) ret = 255;
 
     write_pixel(dst, ret, loc, size);
 }
 
 // normalize
-__kernel void normalize(__global uchar *src, __global uchar *dst, float M,
-                        float V, float M0, float V0, int width, int height) {
+__kernel void normalize(__global uchar *src, __global uchar *dst,
+                        __global float *M, __global float *V, float M0,
+                        float V0, int width, int height) {
     sampler_t _sampler =
         CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE;
 
@@ -42,16 +43,17 @@ __kernel void normalize(__global uchar *src, __global uchar *dst, float M,
     int2 size = (int2)(width, height);
     float pixel = read_pixel(src, loc, size);
 
-    float delta = sqrt(V0 * (pixel - M) * (pixel - M) / V);
-    pixel = pixel > M ? M0 + delta : M0 - delta;
+    float _M = M[0];
+    float _V = V[0];
 
-    uchar pixelByte = 0;
-    if (pixel > 255)
-        pixelByte = 255;
-    else if (pixel < 0)
-        pixelByte = 0;
-    else
-        pixelByte = pixel;
+    float diff = (pixel - _M);
+    if (diff < 0) diff = -diff;
+
+    float delta = diff * sqrt(V0 / _V);
+    pixel = pixel > _M ? M0 + delta : M0 - delta;
+
+    int pixelByte = pixel;
+    pixelByte = clamp(pixelByte, 0, 255);
 
     write_pixel(dst, pixelByte, loc, size);
 }
@@ -82,23 +84,23 @@ __kernel void binarize(__global uchar *src, __global uchar *dst, int width,
 
 // dynamicThreshold
 __kernel void dynamicThreshold(__global uchar *src, __global uchar *dst,
-                               int width, int height, int blockSize,
+                               int width, int height, int block_size,
                                float scale) {
     int2 loc = (int2)(get_global_id(0), get_global_id(1));
     int2 size = (int2)(width, height);
 
-    int halfBlockSize = blockSize / 2;
+    int halfblock_size = block_size / 2;
 
     uint pixel = read_pixel(src, loc, size);
 
     float sum = 0;
-    for (int x = loc.x - halfBlockSize; x <= loc.x + halfBlockSize; ++x) {
-        for (int y = loc.y - halfBlockSize; y <= loc.y + halfBlockSize; ++y) {
+    for (int x = loc.x - halfblock_size; x <= loc.x + halfblock_size; ++x) {
+        for (int y = loc.y - halfblock_size; y <= loc.y + halfblock_size; ++y) {
             sum += read_pixel(src, (int2)(x, y), size);
         }
     }
 
-    float mean = sum / ((2 * halfBlockSize + 1) * (2 * halfBlockSize + 1));
+    float mean = sum / ((2 * halfblock_size + 1) * (2 * halfblock_size + 1));
     mean *= scale;
     pixel = pixel > mean ? 255 : 0;
 

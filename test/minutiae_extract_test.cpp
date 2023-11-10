@@ -7,9 +7,11 @@
 #include "OclInfo.hpp"
 #include "random_case_generator.hpp"
 
+using namespace fingerprint_parallel::core;
+
 TEST(MinutiaeDetectTest, ApplyCrossNumber) {
-    OclInfo oclInfo = OclInfo::initOpenCL();
-    MinutiaeDetector detector(oclInfo);
+    OclInfo ocl_info = OclInfo::init_opencl();
+    MinutiaeDetector detector(ocl_info);
 
     //  0: width, 1: height, 2: original data, 3: expected result
     using crossnumber_datatype =
@@ -129,14 +131,14 @@ TEST(MinutiaeDetectTest, ApplyCrossNumber) {
 
     // create random data
     RandomMatrixGenerator generator;
-    const int nRandomCases = 100;
-    for (int i = 0; i < nRandomCases; ++i) {
-        std::tuple<int, int, std::vector<uint8_t>> inputData =
-            generator.generateMatData(0, 1, 5, 5);
+    const int n_random_cases = 100;
+    for (int i = 0; i < n_random_cases; ++i) {
+        std::tuple<int, int, std::vector<uint8_t>> input_data =
+            generator.generate_matrix_data(0, 1, 5, 5);
 
-        const int NC = std::get<0>(inputData);
-        const int NR = std::get<1>(inputData);
-        const std::vector<uint8_t>& arr = std::get<2>(inputData);
+        const int NC = std::get<0>(input_data);
+        const int NR = std::get<1>(input_data);
+        const std::vector<uint8_t>& arr = std::get<2>(input_data);
 
         const auto value = [&](int r, int c) -> const uint8_t {
             if (r < 0 || r >= NR || c < 0 || c >= NC) {
@@ -179,22 +181,22 @@ TEST(MinutiaeDetectTest, ApplyCrossNumber) {
     }
 
     auto test_one_pair = [&](crossnumber_datatype& data) {
-        MatrixBuffer<uint8_t> bufferOriginal(
+        MatrixBuffer<uint8_t> buffer_original(
             std::get<0>(data), std::get<1>(data), std::get<2>(data));
-        MatrixBuffer<uint8_t> bufferResult(std::get<0>(data),
-                                           std::get<1>(data));
-        MatrixBuffer<uint8_t> bufferExpected(
+        MatrixBuffer<uint8_t> buffer_result(std::get<0>(data),
+                                            std::get<1>(data));
+        MatrixBuffer<uint8_t> buffer_expected(
             std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
-        bufferOriginal.createBuffer(oclInfo.ctx);
-        bufferResult.createBuffer(oclInfo.ctx);
-        bufferOriginal.toGpu(oclInfo);
+        buffer_original.create_buffer(ocl_info.ctx_);
+        buffer_result.create_buffer(ocl_info.ctx_);
+        buffer_original.to_gpu(ocl_info);
 
-        detector.applyCrossNumber(bufferOriginal, bufferResult);
+        detector.apply_cross_number(buffer_original, buffer_result);
 
-        bufferResult.toHost(oclInfo);
+        buffer_result.to_host(ocl_info);
 
-        ASSERT_EQ(bufferResult, bufferExpected);
+        ASSERT_EQ(buffer_result, buffer_expected);
     };
 
     for (auto& data : datasets) {

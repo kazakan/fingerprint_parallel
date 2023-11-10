@@ -9,24 +9,28 @@
 #include "OclException.hpp"
 #include "logger.hpp"
 
+namespace fingerprint_parallel {
+namespace core {
+
 class OclInfo {
    public:
-    std::vector<cl::Platform> platforms;
-    cl::Context ctx;
-    std::vector<cl::Device> devices;
-    cl::CommandQueue queue;
+    std::vector<cl::Platform> platforms_;
+    cl::Context ctx_;
+    std::vector<cl::Device> devices_;
+    cl::CommandQueue queue_;
 
-    static OclInfo initOpenCL(bool useGpu = true) {
-        std::vector<cl::Platform> platformList;
-        cl::Platform::get(&platformList);
+    static OclInfo init_opencl(bool use_gpu = true) {
+        std::vector<cl::Platform> platform_list;
+        cl::Platform::get(&platform_list);
 
-        if (platformList.size() == 0) {
+        if (platform_list.size() == 0) {
             DLOG("No available Opencl Platform.")
         }
         cl_context_properties cprops[] = {
-            CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
+            CL_CONTEXT_PLATFORM, (cl_context_properties)(platform_list[0])(),
+            0};
 
-        cl::Context ctx(useGpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU,
+        cl::Context ctx(use_gpu ? CL_DEVICE_TYPE_GPU : CL_DEVICE_TYPE_CPU,
                         cprops);
 
         std::vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
@@ -36,16 +40,16 @@ class OclInfo {
         }
         cl::CommandQueue queue(ctx, devices[0], 0);
 
-        OclInfo oclinfo = {platformList, ctx, devices, queue};
+        OclInfo ocl_info = {platform_list, ctx, devices, queue};
 
-        return oclinfo;
+        return ocl_info;
     }
 
     static void showPlatformInfos() {
-        std::vector<cl::Platform> platformList;
-        cl::Platform::get(&platformList);
+        std::vector<cl::Platform> platform_list;
+        cl::Platform::get(&platform_list);
 
-        for (cl::Platform platform : platformList) {
+        for (cl::Platform platform : platform_list) {
             std::string profile_result;
             std::string version_result;
             std::string name_result;
@@ -58,7 +62,7 @@ class OclInfo {
             platform.getInfo(CL_PLATFORM_VERSION, &version_result);
             platform.getInfo(CL_PLATFORM_NAME, &name_result);
             platform.getInfo(CL_PLATFORM_VENDOR, &vender_result);
-            //platform.getInfo(CL_PLATFORM_EXTENSIONS, &extensions_result);
+            // platform.getInfo(CL_PLATFORM_EXTENSIONS, &extensions_result);
             platform.getInfo(CL_PLATFORM_HOST_TIMER_RESOLUTION,
                              &host_timer_resolution_result);
             platform.getInfo(CL_PLATFORM_ICD_SUFFIX_KHR,
@@ -69,7 +73,7 @@ class OclInfo {
             LOG("PLATFORM_PROFILE : %s", profile_result.data());
             LOG("Version : %s", version_result.data());
             LOG("Vendor : %s", vender_result.data());
-            //LOG("Extensions : %s", extensions_result.data());
+            // LOG("Extensions : %s", extensions_result.data());
             LOG("Host timer resolution : %ul", host_timer_resolution_result);
             LOG("ICD suffix KHR : %s", icd_suffix_khr_result.data());
 
@@ -79,17 +83,18 @@ class OclInfo {
             for (const cl::Device& device : devices) {
                 std::string dev_name_result;
                 cl_device_type dtype;
-                size_t max_workgroup_size=0;
+                size_t max_workgroup_size = 0;
                 device.getInfo(CL_DEVICE_NAME, &dev_name_result);
                 device.getInfo(CL_DEVICE_TYPE, &dtype);
-                device.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &max_workgroup_size);
+                device.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                               &max_workgroup_size);
 
                 LOG("========== Device %s info ==========",
                     dev_name_result.data());
                 LOG("Name : %s", dev_name_result.data());
                 LOG("Type : %s",
                     dtype == CL_DEVICE_TYPE_GPU ? "GPU" : "CPU or else");
-                    
+
                 LOG("Max workgroup size : %lld", max_workgroup_size);
                 LOG("========== End of device %s ==========",
                     dev_name_result.data());
@@ -98,3 +103,6 @@ class OclInfo {
         }
     }
 };
+
+}  // namespace core
+}  // namespace fingerprint_parallel

@@ -2,6 +2,9 @@
 
 #include "CL/opencl.hpp"
 
+namespace fingerprint_parallel {
+namespace core {
+
 /**
  * @brief Exception class for print Opencl error with error code translated for
  * human.
@@ -9,26 +12,26 @@
  */
 class OclException : public std::exception {
    public:
-    std::string fullMessage;
+    std::string full_message_;
 
     /**
      * @brief
      * @param message Your message to show.
-     * @param errCode Error code created by OpenCL methods.
+     * @param err_code Error code created by OpenCL methods.
      */
-    OclException(std::string message, cl_int errCode) {
-        fullMessage = message + " | [ERR CODE] " + clErrorToStr(errCode);
+    OclException(std::string message, cl_int err_code) {
+        full_message_ = message + " | [ERR CODE] " + cl_err_to_str(err_code);
     }
 
-    const char *what() const throw() { return fullMessage.c_str(); }
+    const char *what() const throw() { return full_message_.c_str(); }
 
     /**
      * @brief Translate opencl error code to human readable.
-     * @param errorCode Opencl error code
+     * @param err_code Opencl error code
      * @return String represents errorCode
      */
-    static std::string clErrorToStr(cl_int errorCode) {
-        switch (errorCode) {
+    static std::string cl_err_to_str(cl_int err_code) {
+        switch (err_code) {
             case CL_SUCCESS:
                 return "CL_SUCCESS";
             case CL_DEVICE_NOT_FOUND:
@@ -163,8 +166,8 @@ class OclException : public std::exception {
  */
 class OclBuildException : public OclException {
    public:
-    OclBuildException(cl_int errCode)
-        : OclException("Error building program...", errCode) {}
+    OclBuildException(cl_int err_code)
+        : OclException("Error building program...", err_code) {}
 };
 
 /**
@@ -173,6 +176,9 @@ class OclBuildException : public OclException {
  */
 class OclKernelEnqueueError : public OclException {
    public:
-    OclKernelEnqueueError(cl_int errCode)
-        : OclException("Error enqueue kernel...", errCode) {}
+    OclKernelEnqueueError(cl_int err_code)
+        : OclException("Error enqueue kernel...", err_code) {}
 };
+
+}  // namespace core
+}  // namespace fingerprint_parallel
