@@ -164,7 +164,7 @@ bool ImgTransform::thinning_one_iter(MatrixBuffer<uint8_t> &src,
                                  group_size * n_groups.get()[1]);
 
     MatrixBuffer<uint8_t> globalFlag(n_groups.get()[0], n_groups.get()[1]);
-    globalFlag.create_buffer(ocl_info.ctx_);
+    globalFlag.create_buffer(&ocl_info);
 
     kernel.setArg(0, *src.buffer());
     kernel.setArg(1, *dst.buffer());
@@ -180,7 +180,7 @@ bool ImgTransform::thinning_one_iter(MatrixBuffer<uint8_t> &src,
 
     if (err) throw OclKernelEnqueueError(err);
 
-    globalFlag.to_host(ocl_info);
+    globalFlag.to_host();
     bool flag = false;  // whether a pixel changed
     for (int i = 0; i < globalFlag.size(); ++i) {
         flag |= globalFlag.data()[i];
@@ -205,7 +205,7 @@ bool ImgTransform::thinning8_one_iter(MatrixBuffer<uint8_t> &src,
                                  group_size * n_groups.get()[1]);
 
     MatrixBuffer<uint8_t> globalFlag(n_groups.get()[0], n_groups.get()[1]);
-    globalFlag.create_buffer(ocl_info.ctx_);
+    globalFlag.create_buffer(&ocl_info);
 
     kernel.setArg(0, *src.buffer());
     kernel.setArg(1, *dst.buffer());
@@ -221,7 +221,7 @@ bool ImgTransform::thinning8_one_iter(MatrixBuffer<uint8_t> &src,
 
     if (err) throw OclKernelEnqueueError(err);
 
-    globalFlag.to_host(ocl_info);
+    globalFlag.to_host();
     bool flag = false;  // whether a pixel changed
     for (int i = 0; i < globalFlag.size(); ++i) {
         flag |= globalFlag.data()[i];
@@ -235,11 +235,11 @@ void ImgTransform::thinning(MatrixBuffer<uint8_t> &src,
                             MatrixBuffer<uint8_t> &dst) {
     MatrixBuffer<uint8_t> input(src.width(), src.height());
     MatrixBuffer<uint8_t> output(dst.width(), dst.height());
-    input.create_buffer(ocl_info.ctx_);
-    output.create_buffer(ocl_info.ctx_);
+    input.create_buffer(&ocl_info);
+    output.create_buffer(&ocl_info);
 
     // copy src to input
-    src.copy_buffer(ocl_info, input);
+    src.copy_buffer(input);
     int loopCnt = 0;
     const int maxLoop = 1000000;
 
@@ -247,31 +247,31 @@ void ImgTransform::thinning(MatrixBuffer<uint8_t> &src,
     do {
         done = true;
         done &= thinning_one_iter(input, output, 0);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
         done &= thinning_one_iter(input, output, 1);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
         done &= thinning_one_iter(input, output, 2);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
         done &= thinning_one_iter(input, output, 3);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
 
         // std::cout<<"rrr"<<std::endl;
 
     } while (!done && (loopCnt++ < maxLoop));
 
     // copy output to dst
-    output.copy_buffer(ocl_info, dst);
+    output.copy_buffer(dst);
 }
 
 void ImgTransform::thinning8(MatrixBuffer<uint8_t> &src,
                              MatrixBuffer<uint8_t> &dst) {
     MatrixBuffer<uint8_t> input(src.width(), src.height());
     MatrixBuffer<uint8_t> output(dst.width(), dst.height());
-    input.create_buffer(ocl_info.ctx_);
-    output.create_buffer(ocl_info.ctx_);
+    input.create_buffer(&ocl_info);
+    output.create_buffer(&ocl_info);
 
     // copy src to input
-    src.copy_buffer(ocl_info, input);
+    src.copy_buffer(input);
     int loopCnt = 0;
     const int maxLoop = 1000000;
 
@@ -279,18 +279,18 @@ void ImgTransform::thinning8(MatrixBuffer<uint8_t> &src,
     do {
         done = true;
         done &= thinning8_one_iter(input, output, 0);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
         done &= thinning8_one_iter(input, output, 1);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
         done &= thinning8_one_iter(input, output, 2);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
         done &= thinning8_one_iter(input, output, 3);
-        output.copy_buffer(ocl_info, input);
+        output.copy_buffer(input);
 
     } while (!done && (loopCnt++ < maxLoop));
 
     // copy output to dst
-    output.copy_buffer(ocl_info, dst);
+    output.copy_buffer(dst);
 }
 
 void ImgTransform::gaussian_filter(MatrixBuffer<uint8_t> &src,

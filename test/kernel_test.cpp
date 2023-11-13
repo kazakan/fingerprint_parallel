@@ -82,13 +82,13 @@ TEST(ImageTransformTest, GrayScale) {
             img.data());
         if (err) throw OclException("Error while enqueue image", err);
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_result.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
         img_transformer.to_gray_scale(climg, buffer_result);
 
-        buffer_result.to_host(ocl_info);
+        buffer_result.to_host();
 
         for (int i = 0; i < std::get<2>(data).size(); ++i) {
             const int v1 = buffer_result.data()[i];
@@ -158,13 +158,13 @@ TEST(ImageTransformTest, Negate) {
         MatrixBuffer<uint8_t> buffer_expected(
             std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_result.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
         img_transformer.negate(buffer_original, buffer_result);
 
-        buffer_result.to_host(ocl_info);
+        buffer_result.to_host();
 
         ASSERT_EQ(buffer_result, buffer_expected);
     };
@@ -181,13 +181,13 @@ TEST(ImageTransformTest, Copy) {
     MatrixBuffer<uint8_t> buffer_original({1, 50, 126, 200, 255});
     MatrixBuffer<uint8_t> buffer_copied(1, 5);
 
-    buffer_original.create_buffer(ocl_info.ctx_);
-    buffer_copied.create_buffer(ocl_info.ctx_);
+    buffer_original.create_buffer(&ocl_info);
+    buffer_copied.create_buffer(&ocl_info);
 
-    buffer_original.to_gpu(ocl_info);
+    buffer_original.to_gpu();
 
     img_transformer.copy(buffer_original, buffer_copied);
-    buffer_copied.to_host(ocl_info);
+    buffer_copied.to_host();
 
     ASSERT_EQ(buffer_copied, buffer_original);
 }
@@ -268,14 +268,14 @@ TEST(ImageTransformTest, Normalize) {
         MatrixBuffer<uint8_t> buffer_expected(
             std::get<2>(data), std::get<3>(data), std::get<5>(data));
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_result.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
         ScalarBuffer<float> mean, var;
 
-        mean.create_buffer(ocl_info.ctx_);
-        var.create_buffer(ocl_info.ctx_);
+        mean.create_buffer(&ocl_info);
+        var.create_buffer(&ocl_info);
 
         img_statics.mean(buffer_original, mean);
         img_statics.var(buffer_original, var);
@@ -284,7 +284,7 @@ TEST(ImageTransformTest, Normalize) {
                                   std::get<0>(data), std::get<1>(data), mean,
                                   var);
 
-        buffer_result.to_host(ocl_info);
+        buffer_result.to_host();
 
         ASSERT_EQ(buffer_result, buffer_expected);
     };
@@ -411,15 +411,15 @@ TEST(ImageTransformTest, DynamicThresholding) {
         MatrixBuffer<uint8_t> buffer_expected(
             std::get<2>(data), std::get<3>(data), std::get<5>(data));
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_result.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
         img_transformer.dynamic_thresholding(buffer_original, buffer_result,
                                              std::get<0>(data),
                                              std::get<1>(data));
 
-        buffer_result.to_host(ocl_info);
+        buffer_result.to_host();
 
         ASSERT_EQ(buffer_result, buffer_expected);
     };
@@ -521,13 +521,13 @@ TEST(ImageTransformTest, ApplyGaussian) {
         MatrixBuffer<uint8_t> buffer_expected(
             std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_result.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
         img_transformer.gaussian_filter(buffer_original, buffer_result);
 
-        buffer_result.to_host(ocl_info);
+        buffer_result.to_host();
 
         ASSERT_EQ(buffer_result, buffer_expected);
     };

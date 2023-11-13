@@ -27,6 +27,7 @@ class MatrixBuffer {
     std::size_t height_;
     std::size_t size_;
     cl::Buffer *buffer_ = nullptr;
+    OclInfo *ocl_info_ = nullptr;
 
    public:
     /**
@@ -85,16 +86,18 @@ class MatrixBuffer {
      * @param memFlag flag used for OpenCL memory access policy. Default =
      * CL_MEM_READ_WRITE
      */
-    void create_buffer(cl::Context ctx,
+    void create_buffer(OclInfo *ocl_info,
                        cl_mem_flags mem_flag = CL_MEM_READ_WRITE) {
         cl_int err = CL_SUCCESS;
+
+        ocl_info_ = ocl_info;
 
         if (buffer_ != nullptr) {
             delete buffer_;
         }
 
-        buffer_ =
-            new cl::Buffer(ctx, mem_flag, size_ * sizeof(T), nullptr, &err);
+        buffer_ = new cl::Buffer(ocl_info_->ctx_, mem_flag, size_ * sizeof(T),
+                                 nullptr, &err);
 
         if (err != CL_SUCCESS) {
             throw OclException(
@@ -103,7 +106,6 @@ class MatrixBuffer {
     }
 
     /**
-     * @brief Get width of matrix.
      * @return Width of matrix
      */
     const std::size_t width() const { return width_; }
@@ -132,13 +134,19 @@ class MatrixBuffer {
      */
     cl::Buffer *buffer() { return buffer_; }
 
+    OclInfo *ocl_info() { return ocl_info_; }
+
     /**
      * @brief Copy Host memory to Gpu.
      * @param ocl_info OclInfo contains valid queue.
      * @param blocking if false, only enqueue job and continue. Default=true.
      */
-    void to_gpu(OclInfo &ocl_info, bool blocking = true) {
-        cl_int err = ocl_info.queue_.enqueueWriteBuffer(
+    void to_gpu(bool blocking = true) {
+        if (ocl_info_ == nullptr) {
+            throw std::runtime_error("ocl_info is not nullptr.");
+        }
+
+        cl_int err = ocl_info_->queue_.enqueueWriteBuffer(
             *buffer(), blocking, 0, size() * sizeof(T), (void *)data(), nullptr,
             nullptr);
         if (err) throw OclException("Error enqueueWriteBuffer", err);
@@ -149,8 +157,12 @@ class MatrixBuffer {
      * @param ocl_info OclInfo contains valid queue.
      * @param blocking if false, only enqueue job and continue. Default=true.
      */
-    void to_host(OclInfo &ocl_info, bool blocking = true) {
-        cl_int err = ocl_info.queue_.enqueueReadBuffer(
+    void to_host(bool blocking = true) {
+        if (ocl_info_ == nullptr) {
+            throw std::runtime_error("ocl_info is not nullptr.");
+        }
+
+        cl_int err = ocl_info_->queue_.enqueueReadBuffer(
             *buffer(), blocking, 0, size() * sizeof(T), (void *)data(), nullptr,
             nullptr);
         if (err) throw OclException("Error enqueueReadBuffer", err);
@@ -161,8 +173,11 @@ class MatrixBuffer {
      * @param ocl_info OclInfo contains valid queue.
      * @param dst destination to be copied.
      */
-    void copy_buffer(OclInfo &ocl_info, MatrixBuffer &dst) {
-        cl_int err = ocl_info.queue_.enqueueCopyBuffer(
+    void copy_buffer(MatrixBuffer &dst) {
+        if (ocl_info_ == nullptr) {
+            throw std::runtime_error("ocl_info is not nullptr.");
+        }
+        cl_int err = ocl_info_->queue_.enqueueCopyBuffer(
             *buffer(), *dst.buffer(), 0, 0, size() * sizeof(T));
         if (err) throw OclException("Error enqueueCopyBuffer", err);
     }

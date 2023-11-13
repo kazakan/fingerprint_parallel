@@ -188,13 +188,13 @@ TEST(MinutiaeDetectTest, ApplyCrossNumber) {
         MatrixBuffer<uint8_t> buffer_expected(
             std::get<0>(data), std::get<1>(data), std::get<3>(data));
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_result.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
         detector.apply_cross_number(buffer_original, buffer_result);
 
-        buffer_result.to_host(ocl_info);
+        buffer_result.to_host();
 
         ASSERT_EQ(buffer_result, buffer_expected);
     };

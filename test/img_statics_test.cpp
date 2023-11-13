@@ -55,12 +55,12 @@ TEST(ImgStaticsTest, Sum) {
 
         ScalarBuffer<uint64_t> result;
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
-        result.create_buffer(ocl_info.ctx_);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
+        result.create_buffer(&ocl_info);
 
         img_statics.sum(buffer_original, result);
-        result.to_host(ocl_info);
+        result.to_host();
 
         ASSERT_EQ(result.value(), expected);
     };
@@ -108,13 +108,13 @@ TEST(ImgStaticsTest, SqaureSum) {
         ScalarBuffer<uint64_t> result;
         double expected = std::get<3>(data);
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
-        result.create_buffer(ocl_info.ctx_);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
+        result.create_buffer(&ocl_info);
 
         img_statics.square_sum(buffer_original, result);
 
-        result.to_host(ocl_info);
+        result.to_host();
 
         ASSERT_EQ(result.value(), expected);
     };
@@ -167,14 +167,14 @@ TEST(ImgStaticsTest, Mean) {
         ScalarBuffer<float> result;
         float expected = std::get<3>(data);
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
-        result.create_buffer(ocl_info.ctx_);
+        result.create_buffer(&ocl_info);
 
         img_statics.mean(buffer_original, result);
 
-        result.to_host(ocl_info);
+        result.to_host();
 
         ASSERT_NEAR(result.value(), expected, 0.0001);
     };
@@ -229,13 +229,13 @@ TEST(ImgStaticsTest, Var) {
 
         float expected = std::get<3>(data);
 
-        buffer_original.create_buffer(ocl_info.ctx_);
-        buffer_original.to_gpu(ocl_info);
+        buffer_original.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
 
-        result.create_buffer(ocl_info.ctx_);
+        result.create_buffer(&ocl_info);
 
         img_statics.var(buffer_original, result);
-        result.to_host(ocl_info);
+        result.to_host();
 
         float relative_err = abs((result.value() - expected) / result.value());
 

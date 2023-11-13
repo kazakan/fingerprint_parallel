@@ -44,13 +44,13 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
                                                 0, 0, img.data());
     if (err) throw OclException("Error while enqueue image", err);
 
-    mainBuffer->create_buffer(ocl_info.ctx_);
-    tmpBuffer.create_buffer(ocl_info.ctx_);
+    mainBuffer->create_buffer(&ocl_info);
+    tmpBuffer.create_buffer(&ocl_info);
 
     img_transformer.to_gray_scale(climg, tmpBuffer);
     img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->to_host(ocl_info);
+    mainBuffer->to_host();
     Img resultGray(*mainBuffer);
     resultGray.save_image(resultPrefix + "resultGray.png");
 
@@ -58,7 +58,7 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
 
     img_transformer.negate(*mainBuffer, tmpBuffer);
     img_transformer.copy(tmpBuffer, *mainBuffer);
-    mainBuffer->to_host(ocl_info);
+    mainBuffer->to_host();
     Img resultNegate(*mainBuffer);
     resultNegate.save_image(resultPrefix + "resultNegate.png");
 
@@ -66,7 +66,7 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
     img_transformer.gaussian_filter(*mainBuffer, tmpBuffer);
     img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->to_host(ocl_info);
+    mainBuffer->to_host();
     Img resultGaussian(*mainBuffer);
     resultGaussian.save_image(resultPrefix + "resultGaussian.png");
 
@@ -74,8 +74,8 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
     ScalarBuffer<float> mean;
     ScalarBuffer<float> var;
 
-    mean.create_buffer(ocl_info.ctx_);
-    var.create_buffer(ocl_info.ctx_);
+    mean.create_buffer(&ocl_info);
+    var.create_buffer(&ocl_info);
 
     img_statics.mean(*mainBuffer, mean);
     img_statics.var(*mainBuffer, var);
@@ -83,7 +83,7 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
     img_transformer.normalize(*mainBuffer, tmpBuffer, 128, 1000, mean, var);
     img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->to_host(ocl_info);
+    mainBuffer->to_host();
     Img resultNormalize(*mainBuffer);
     resultNormalize.save_image(resultPrefix + "resultNormalize.png");
 
@@ -99,7 +99,7 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
     img_transformer.binarize(*mainBuffer, tmpBuffer, 200);
     img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->to_host(ocl_info);
+    mainBuffer->to_host();
     Img resultBinarize(*mainBuffer);
     resultBinarize.save_image(resultPrefix + "resultBinarize.png");
 
@@ -107,18 +107,18 @@ unique_ptr<MatrixBuffer<BYTE>> preprocess(Img& img, OclInfo& ocl_info,
     img_transformer.thinning8(*mainBuffer, tmpBuffer);
     img_transformer.copy(tmpBuffer, *mainBuffer);
 
-    mainBuffer->to_host(ocl_info);
+    mainBuffer->to_host();
     Img resultThinning(*mainBuffer);
     resultThinning.save_image(resultPrefix + "resultThinning.png");
 
     // cross number
     detector.apply_cross_number(*mainBuffer, tmpBuffer);
     img_transformer.copy(tmpBuffer, *mainBuffer);
-    tmpBuffer.to_host(ocl_info);
+    tmpBuffer.to_host();
 
     detector.remove_false_minutiae(*mainBuffer, tmpBuffer);
     img_transformer.copy(tmpBuffer, *mainBuffer);
-    tmpBuffer.to_host(ocl_info);
+    tmpBuffer.to_host();
 
     Img resultCrossNumber(tmpBuffer);
 
