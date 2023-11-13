@@ -14,3 +14,6 @@ run :
 	
 test : build
 	cd ./build/test && ctest --output-on-failure
+
+run_reduction_time_test : build
+	./build/test/reduction_time_test*

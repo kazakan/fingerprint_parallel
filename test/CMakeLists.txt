@@ -25,3 +25,15 @@ target_link_libraries(
 
 include(GoogleTest)
 gtest_discover_tests(unit_test)
+
+
+add_executable(
+    reduction_time_test
+    reduction_alg_time_test.cpp
+    random_case_generator.hpp
+)
+
+target_link_libraries(
+    reduction_time_test   
+    FingerprintParallelCore
+)
