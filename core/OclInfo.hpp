@@ -38,7 +38,7 @@ class OclInfo {
         if (devices.size() == 0) {
             DLOG("No available Opencl Devices.")
         }
-        cl::CommandQueue queue(ctx, devices[0], 0);
+        cl::CommandQueue queue(ctx, devices[0],CL_QUEUE_PROFILING_ENABLE);
 
         OclInfo ocl_info = {platform_list, ctx, devices, queue};
 
@@ -84,10 +84,14 @@ class OclInfo {
                 std::string dev_name_result;
                 cl_device_type dtype;
                 size_t max_workgroup_size = 0;
+                size_t prefered_workgroup_size_multiple = 0;
+
                 device.getInfo(CL_DEVICE_NAME, &dev_name_result);
                 device.getInfo(CL_DEVICE_TYPE, &dtype);
                 device.getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE,
                                &max_workgroup_size);
+                device.getInfo(CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE ,
+                               &prefered_workgroup_size_multiple);
 
                 LOG("========== Device %s info ==========",
                     dev_name_result.data());
@@ -96,6 +100,7 @@ class OclInfo {
                     dtype == CL_DEVICE_TYPE_GPU ? "GPU" : "CPU or else");
 
                 LOG("Max workgroup size : %lld", max_workgroup_size);
+                LOG("Prefered workgroup size : %lld", max_workgroup_size);
                 LOG("========== End of device %s ==========",
                     dev_name_result.data());
             }
