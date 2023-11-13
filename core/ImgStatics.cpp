@@ -4,6 +4,7 @@
 
 #include <cstdint>
 
+#include "MatrixBuffer.hpp"
 #include "ScalarBuffer.hpp"
 #include "ocl_core_src.hpp"
 
@@ -21,20 +22,21 @@ ImgStatics::ImgStatics(OclInfo ocl_info) {
 }
 
 void ImgStatics::sum(MatrixBuffer<uint8_t> &src, ScalarBuffer<uint64_t> &ret) {
-    cl::Kernel kernel(program, "sum");
+    cl::Kernel kernel_sum(program, "sum_uchar_long");
 
     const int N = src.size();
     const int group_size = 512;
+    const int n_groups = (N + (group_size - 1)) / group_size;
+    const int n_threads = n_groups * group_size;
 
-    kernel.setArg(0, *src.buffer());
-    kernel.setArg(1, *ret.buffer());
-    kernel.setArg(2, group_size * sizeof(int64_t), NULL);
-    kernel.setArg(3, N);
+    kernel_sum.setArg(0, *src.buffer());
+    kernel_sum.setArg(1, *ret.buffer());
+    kernel_sum.setArg(2, group_size * sizeof(int64_t), NULL);
+    kernel_sum.setArg(3, N);
 
-    cl_int err = ocl_info.queue_.enqueueNDRangeKernel(kernel, cl::NullRange,
+    cl_int err = ocl_info.queue_.enqueueNDRangeKernel(kernel_sum, cl::NullRange,
                                                       cl::NDRange(group_size),
                                                       cl::NDRange(group_size));
-
     if (err) throw OclKernelEnqueueError(err);
 }
 
