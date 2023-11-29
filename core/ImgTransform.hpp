@@ -124,6 +124,16 @@ class ImgTransform {
      * @param dst Where result be saved.
      */
     void copy(MatrixBuffer<uint8_t> &src, MatrixBuffer<uint8_t> &dst);
+
+    /**
+     * @brief Rotate src image in anticlockwise for given degree and write to
+     * dst.
+     * @param src Original image.
+     * @param dst Where result be saved.
+     * @param degree Radian degree.
+     */
+    void rotate(MatrixBuffer<uint8_t> &src, MatrixBuffer<uint8_t> &dst,
+                float degree);
 };
 
 }  // namespace core

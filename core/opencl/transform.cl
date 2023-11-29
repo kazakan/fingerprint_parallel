@@ -450,3 +450,23 @@ __kernel void copy(__global uchar *src, __global uchar *dst, int len) {
         dst[loc] = src[loc];
     }
 }
+
+// rotate
+__kernel void rotate(__global uchar *src, __global uchar *dst, int width,
+                     int height, float degree) {
+    const int2 loc = (int2)(get_global_id(0), get_global_id(1));
+    const int2 size = (int2)(width, height);
+    const float2 center = (float2)(width / 2, height / 2);
+
+    const float s = sin(-degree);
+    const float c = cos(-degree);
+
+    const float2 v = convert_float2(loc) - center;
+
+    const float2 target_pos_float =
+        (float2)(c * v.x - s * v.y, s * v.x + c * v.y) + center;
+    const int2 target_pos_int = convert_int2(target_pos_float + 0.5f);
+
+    uint val = read_pixel(src, target_pos_int, size);
+    write_pixel(dst, val, loc, size);
+}

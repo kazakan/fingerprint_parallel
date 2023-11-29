@@ -13,6 +13,8 @@
 
 using namespace fingerprint_parallel::core;
 
+#define PI 3.141592
+
 TEST(ImageTransformTest, GrayScale) {
     OclInfo ocl_info = OclInfo::init_opencl();
     ImgTransform img_transformer(ocl_info);
@@ -228,7 +230,7 @@ TEST(ImageTransformTest, Normalize) {
     for (int random_case_no = 0; random_case_no < n_random_cases;
          ++random_case_no) {
         std::tuple<int, int, std::vector<uint8_t>> input_data =
-            generator.generate_matrix_data(0, 255, 5, 5);
+            generator.generate_matrix_data(0, 255, 5, 32);
 
         const int NC = std::get<0>(input_data);
         const int NR = std::get<1>(input_data);
@@ -526,6 +528,94 @@ TEST(ImageTransformTest, ApplyGaussian) {
         buffer_original.to_gpu();
 
         img_transformer.gaussian_filter(buffer_original, buffer_result);
+
+        buffer_result.to_host();
+
+        ASSERT_EQ(buffer_result, buffer_expected);
+    };
+
+    for (auto& data : datasets) {
+        test_one_pair(data);
+    }
+}
+
+TEST(ImageTransformTest, Rotate) {
+    OclInfo ocl_info = OclInfo::init_opencl();
+    ImgTransform img_transformer(ocl_info);
+
+    //  0: width, 1: height, 2: original data, 3: expected result
+    using rotate_datatype =
+        std::tuple<int, int, std::vector<uint8_t>, std::vector<uint8_t>, float>;
+
+    std::vector<rotate_datatype> datasets;
+
+    // create random data
+    RandomMatrixGenerator generator;
+    std::mt19937_64 gen(47);
+    std::uniform_real_distribution<float> degree_dis(-1.0f * PI, 1.0f * PI);
+
+    const int n_random_cases = 100;
+    for (int random_case_no = 0; random_case_no < n_random_cases;
+         ++random_case_no) {
+        std::tuple<int, int, std::vector<uint8_t>> input_data =
+            generator.generate_matrix_data(0, 255, 11, 100);
+
+        const int NC = std::get<0>(input_data);
+        const int NR = std::get<1>(input_data);
+        const std::vector<uint8_t>& arr = std::get<2>(input_data);
+
+        const int kCenterX = NC / 2;
+        const int kCenterY = NR / 2;
+
+        const float degree = degree_dis(gen);
+
+        const auto value = [&](int r, int c) -> const uint8_t {
+            if (r < 0 || r >= NR || c < 0 || c >= NC) {
+                return 0;
+            }
+
+            return arr[NC * r + c];
+        };
+
+        const auto rotateVal = [&](int idx) -> const uint8_t {
+            const int r = idx / NC;
+            const int c = idx % NC;
+
+            const float dx = c - kCenterX;
+            const float dy = r - kCenterY;
+
+            const float sin_val = std::sin(-degree);
+            const float cos_val = std::cos(-degree);
+
+            int target_x = cos_val * dx - sin_val * dy + 0.5 + kCenterX;
+            int target_y = sin_val * dx + cos_val * dy + 0.5 + kCenterY;
+
+            return value(target_y, target_x);
+        };
+
+        std::vector<uint8_t> result(arr.size());
+
+        for (int i = 0; i < arr.size(); ++i) {
+            result[i] = rotateVal(i);
+        }
+
+        datasets.push_back({NC, NR, arr, result, degree});
+    }
+
+    auto test_one_pair = [&](rotate_datatype& data) {
+        MatrixBuffer<uint8_t> buffer_original(
+            std::get<0>(data), std::get<1>(data), std::get<2>(data));
+        MatrixBuffer<uint8_t> buffer_result(std::get<0>(data),
+                                            std::get<1>(data));
+        MatrixBuffer<uint8_t> buffer_expected(
+            std::get<0>(data), std::get<1>(data), std::get<3>(data));
+        const float degree = std::get<4>(data);
+
+        buffer_original.create_buffer(&ocl_info);
+        buffer_result.create_buffer(&ocl_info);
+        buffer_original.to_gpu();
+
+        img_transformer.rotate(buffer_original, buffer_result, degree);
 
         buffer_result.to_host();
 

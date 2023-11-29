@@ -288,6 +288,7 @@ void ImgTransform::thinning8(MatrixBuffer<uint8_t> &src,
         output.copy_buffer(input);
 
     } while (!done && (loopCnt++ < maxLoop));
+    DLOG("LOOP %d : ", loopCnt);
 
     // copy output to dst
     output.copy_buffer(dst);
@@ -332,6 +333,32 @@ void ImgTransform::copy(MatrixBuffer<uint8_t> &src,
     kernel.setArg(0, *src.buffer());
     kernel.setArg(1, *dst.buffer());
     kernel.setArg(2, len);
+
+    cl_int err = ocl_info.queue_.enqueueNDRangeKernel(
+        kernel, cl::NullRange, global_work_size, local_work_size);
+
+    if (err) throw OclKernelEnqueueError(err);
+}
+
+void ImgTransform::rotate(MatrixBuffer<uint8_t> &src,
+                          MatrixBuffer<uint8_t> &dst, const float degree) {
+    cl::Kernel kernel(program, "rotate");
+
+    const std::size_t group_size = 8;
+    const std::size_t W = dst.width();
+    const std::size_t H = dst.height();
+
+    cl::NDRange local_work_size(group_size, group_size);
+    cl::NDRange n_groups((W + (group_size - 1)) / group_size,
+                         (H + (group_size - 1)) / group_size);
+    cl::NDRange global_work_size(group_size * n_groups.get()[0],
+                                 group_size * n_groups.get()[1]);
+
+    kernel.setArg(0, *src.buffer());
+    kernel.setArg(1, *dst.buffer());
+    kernel.setArg(2, dst.width());
+    kernel.setArg(3, dst.height());
+    kernel.setArg(4, degree);
 
     cl_int err = ocl_info.queue_.enqueueNDRangeKernel(
         kernel, cl::NullRange, global_work_size, local_work_size);
