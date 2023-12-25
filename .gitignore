@@ -1,4 +1,13 @@
 .vs/
 .vscode/
+.cache/
 .code/
 build/
+data/
+
+*.jpg
+*.png
+*.BMP
+*.tiff
+
+docs/
